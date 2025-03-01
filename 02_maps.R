@@ -49,66 +49,143 @@ bp_buffer <- read_sf(file.path(peter_path, "BridgeParkBuffer.shp")) %>%
   st_transform(crs = 4326) %>%
   clean_names()
 
+#tracts file and data dictionary here: https://opendata.dc.gov/datasets/DCGIS::census-tracts-in-2020/about 
 tracts <- read_sf(file.path(peter_path, "Census_Tracts_in_2020/Census_Tracts_in_2020.shp"))%>% 
   st_as_sf() %>%
   st_transform(crs = 4326) %>%
   clean_names()
+  
+
+# create palettes -- optional  ------------------------------------------------
+# pal_pop <- colorFactor(
+#   palette = "viridis",
+#   domain = df$variable)
 
 
-# making map
-toggle_pop_size_lots_2 <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
+#Creating Labels for Interactive Maps ------------------------------------------
+tracts$popup_label <- paste("Tract: ", tracts$tract, "<br>",
+                            "Population: ", comma(tracts$p0010001),"<br>"
+                            ) %>%
+  lapply(HTML)
+
+# df2$popup_label <- paste("Zip Code: ", shp_data$ZCTA5CE20, "<br>",
+#                               "Religious Property Count: ", comma(shp_data$Rel_prop_Count)) %>%
+#   lapply(HTML)
+
+
+
+# Maps! -----------------------------------------------------------------------
+map_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
   addTiles() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
   addPolygons(
-    data = cdps_urban,
-    fillColor = ~pal_pop(population_group),
+    data = bp_buffer,
+    fillColor = NULL,
+    color = "#273538",
+    highlightOptions = highlightOptions(color = "white", weight = 1,
+                                        bringToFront = TRUE),
+    opacity = .7,
+    weight = 1,
+    fillOpacity = 0,
+    #group ="Count of FBO Owned Properties - Zip Code",
+    #smoothFactor = 0.2,
+    #label = shp_data$popup_label,
+    #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+  ) %>%
+# addLegend(
+#   pal = pal_fbo_zip2,
+#   values = shp_data$Rel_prop_Count,
+#   position = "topright",
+#   title = "Count of FBO Owned Properties - Zip Code",
+#   group = "Count of FBO Owned Properties - Zip Code",
+#   # labFormat = function(type, cuts, p) {
+#   #   # Define custom bin labels in order
+#   #   custom_labels <- c("0", "1-5", "6-9", "10-13", "14-17", "18-300")
+#   #   
+#   #   # Return labels for each cut
+#   #   return(custom_labels)
+#   # },
+#   #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
+#   opacity = 1) %>%
+  addPolygons(
+    data = tracts,
+    fillColor = "p0010001", #~pal_pop(population_group),
     color = "#273538",
     highlightOptions = highlightOptions(color = "white", weight = 1,
                                         bringToFront = TRUE),
     opacity = .5,
     weight = .8,
     fillOpacity = .5,
-    group = "Population - Urban Areas",
+    #group = "TBD",
     #smoothFactor = 0.2,
-    label = cdps_urban$popup_label,
+    label = tracts$popup_label,
     labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
   ) %>%
-  addLegend(
-    pal = pal_pop,
-    values = cdps_urban$population_group,
-    position = "topright",
-    title = "Population - Urban Areas",
-    group = "Population - Urban Areas",
-    opacity = 1) %>%
+  # addLegend(
+  #   pal = pal_pop,
+  #   values = cdps_urban$population_group,
+  #   position = "topright",
+  #   title = "Population - Urban Areas",
+  #   group = "Population - Urban Areas",
+  #   opacity = 1) %>%
   addPolygons(
-    data = shp_data,
-    fillColor = ~pal_fbo_zip2(Rel_prop_Count),
+    data = bp_buffer,
+    fillColor = NULL,
     color = "#273538",
     highlightOptions = highlightOptions(color = "white", weight = 1,
                                         bringToFront = TRUE),
-    opacity = .5,
-    weight = .8,
-    fillOpacity = .6,
-    group ="Count of FBO Owned Properties - Zip Code",
+    opacity = .7,
+    weight = 1,
+    fillOpacity = 0,
+    #group ="Count of FBO Owned Properties - Zip Code",
     #smoothFactor = 0.2,
-    label = shp_data$popup_label,
-    labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
-  ) %>%
-  addLegend(
-    pal = pal_fbo_zip2,
-    values = shp_data$Rel_prop_Count,
-    position = "topright",
-    title = "Count of FBO Owned Properties - Zip Code",
-    group = "Count of FBO Owned Properties - Zip Code",
-    # labFormat = function(type, cuts, p) {
-    #   # Define custom bin labels in order
-    #   custom_labels <- c("0", "1-5", "6-9", "10-13", "14-17", "18-300")
-    #   
-    #   # Return labels for each cut
-    #   return(custom_labels)
-    # },
-    #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
-    opacity = 1) #%>%
+    #label = shp_data$popup_label,
+    #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+  # ) %>%
+  # addLegend(
+  #   pal = pal_fbo_zip2,
+  #   values = shp_data$Rel_prop_Count,
+  #   position = "topright",
+  #   title = "Count of FBO Owned Properties - Zip Code",
+  #   group = "Count of FBO Owned Properties - Zip Code",
+  #   # labFormat = function(type, cuts, p) {
+  #   #   # Define custom bin labels in order
+  #   #   custom_labels <- c("0", "1-5", "6-9", "10-13", "14-17", "18-300")
+  #   #   
+  #   #   # Return labels for each cut
+  #   #   return(custom_labels)
+  #   # },
+  #   #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
+  #   opacity = 1) %>%
+  # addPolygons(
+  #   data = bridge_park,
+  #   fillColor = "#FFFF00",
+  #   color = "#273538",
+  #   highlightOptions = highlightOptions(color = "white", weight = 1,
+  #                                       bringToFront = TRUE),
+  #   opacity = .7,
+  #   weight = 1,
+  #   fillOpacity = 0,
+  #   #group ="Count of FBO Owned Properties - Zip Code",
+  #   #smoothFactor = 0.2,
+  #   #label = shp_data$popup_label,
+  #   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+  ) #%>%
+# addLegend(
+#   pal = pal_fbo_zip2,
+#   values = shp_data$Rel_prop_Count,
+#   position = "topright",
+#   title = "Count of FBO Owned Properties - Zip Code",
+#   group = "Count of FBO Owned Properties - Zip Code",
+#   # labFormat = function(type, cuts, p) {
+#   #   # Define custom bin labels in order
+#   #   custom_labels <- c("0", "1-5", "6-9", "10-13", "14-17", "18-300")
+#   #   
+#   #   # Return labels for each cut
+#   #   return(custom_labels)
+#   # },
+#   #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
+#   opacity = 1) %>%
   # addLayersControl(
   #   baseGroups = c(
   #     "Population - Urban Areas",
@@ -138,4 +215,4 @@ toggle_pop_size_lots_2 <- leaflet(options = leafletOptions(zoomControl = FALSE))
   #   }
   # ")
 
-toggle_pop_size_lots_2
+map_buffer
