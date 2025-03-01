@@ -8,7 +8,7 @@ library(ggplot2)
 library(stringr)
 library(lubridate)
 
-#certificate <- read_csv("/Users/hhoffmann/Downloads/Certificate_of_Occupancy.csv") %>% 
+#certificate <- read_csv("/Users/hhoffmann/Downloads/Certificate_of_Occupancy.csv") %>% #we can just comment each others out when you need to run this?
 certificate <- read_csv("C:/Users/peter/Documents/GitHub/Certificate_of_Occupancy.csv") %>% 
   clean_names() %>% 
   filter(!is.na(ward)) %>% 
@@ -52,3 +52,4 @@ certificates_ward_summary <- certificates_2022_today %>%
 #   mutate(
 #     count(ward)
 #   )
+
