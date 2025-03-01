@@ -30,7 +30,6 @@ peter_export <- "C:/Users/peter/Documents/NYU/Bridge_Park_Capstone"
 #henry_export <- ""
   
 #reading in shapefiles 
-
 roads <- read_sf(file.path(peter_path, "Roadway_SubBlock/Roadway_SubBlock.shp")) %>% 
   st_as_sf() %>%
   st_transform(crs = 4326)%>%
@@ -54,7 +53,19 @@ tracts <- read_sf(file.path(peter_path, "Census_Tracts_in_2020/Census_Tracts_in_
   st_as_sf() %>%
   st_transform(crs = 4326) %>%
   clean_names()
-  
+
+#Reading in Business Addresses
+#used Small Business Checklist & Geocodio
+small_biz <- read.csv("") %>% 
+  clean_names()
+
+small_biz_geo <- small_biz %>% 
+  select(
+    name,
+    address,
+    latitude,
+    longitude
+  )
 
 # create palettes -- optional  ------------------------------------------------
 # pal_pop <- colorFactor(
