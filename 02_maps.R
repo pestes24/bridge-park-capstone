@@ -56,15 +56,18 @@ tracts <- read_sf(file.path(peter_path, "Census_Tracts_in_2020/Census_Tracts_in_
 
 #Reading in Business Addresses
 #used Small Business Checklist & Geocodio
-small_biz <- read.csv("") %>% 
-  clean_names()
+small_biz <- read.csv(file.path(peter_path, "bp_walkshed_small_businesses.csv")) %>% 
+  clean_names() %>% 
+  rename(address = address_for_geocoding)
 
 small_biz_geo <- small_biz %>% 
   select(
     name,
     address,
     latitude,
-    longitude
+    longitude,
+    census_tract_code,
+    acs_economics_number_of_households_total_value
   )
 
 # create palettes -- optional  ------------------------------------------------
@@ -105,7 +108,7 @@ map_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
     #smoothFactor = 0.2,
     #label = shp_data$popup_label,
     #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
-  ) %>%
+    ) %>%
 # addLegend(
 #   pal = pal_fbo_zip2,
 #   values = shp_data$Rel_prop_Count,
@@ -155,7 +158,7 @@ map_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
     #smoothFactor = 0.2,
     #label = shp_data$popup_label,
     #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
-  # ) %>%
+   ) %>%
   # addLegend(
   #   pal = pal_fbo_zip2,
   #   values = shp_data$Rel_prop_Count,
@@ -170,7 +173,12 @@ map_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
   #   #   return(custom_labels)
   #   # },
   #   #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
-  #   opacity = 1) %>%
+  #   opacity = 1) %>% 
+  addMarkers(
+    data = small_biz_geo,
+    ~longitude, ~latitude, 
+    popup = ~as.character(name), label = ~as.character(name)
+    ) # could make custom markers for businesses by type
   # addPolygons(
   #   data = bridge_park,
   #   fillColor = "#FFFF00",
@@ -184,7 +192,7 @@ map_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
   #   #smoothFactor = 0.2,
   #   #label = shp_data$popup_label,
   #   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
-  ) #%>%
+  # ) %>%
 # addLegend(
 #   pal = pal_fbo_zip2,
 #   values = shp_data$Rel_prop_Count,
