@@ -75,6 +75,9 @@ tracts$popup_label <- paste("Tract: ", tracts$tract, "<br>",
 
 
 # Maps! -----------------------------------------------------------------------
+#Series of maps showing the neighborhood and various components we will be referencing. 
+#Call outs with specific reference to names of areas of neighborhood - historical names and newer names. 
+#Reverence for long-term residents' understanding of places names.
 map_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
   addTiles() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
