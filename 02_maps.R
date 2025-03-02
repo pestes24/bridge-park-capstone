@@ -54,7 +54,7 @@ tracts <- read_sf(file.path(peter_path, "Census_Tracts_in_2020/Census_Tracts_in_
   st_transform(crs = 4326) %>%
   clean_names()
 
-tracts_ana <- tracts %>% 
+tracts_study_area <- tracts %>% 
   filter(tract %in% c("007401","007406","007407","007503","007504","007601","007605"))
 
 #Reading in Business Addresses
@@ -101,9 +101,9 @@ small_biz_geo <- small_biz %>%
 
 
 #Creating Labels for Interactive Maps ------------------------------------------
-tracts_ana$popup_label <- paste("Tract: ", tracts_ana$tract, "<br>",
-                                "Population: ", comma(tracts_ana$p0010001),"<br>",
-                                "Percent Black (alone): ", percent(tracts_ana$p0010004/tracts_ana$p0010002, accuracy = .1),"<br>"
+tracts_study_area$popup_label <- paste("Tract: ", tracts_study_area$tract, "<br>",
+                                "Population: ", comma(tracts_study_area$p0010001),"<br>",
+                                "Percent Black (alone): ", percent(tracts_study_area$p0010004/tracts_study_area$p0010002, accuracy = .1),"<br>"
                                 ) %>%
   lapply(HTML)
                            # Ref: 
@@ -238,7 +238,7 @@ anacostia_ref_map <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
   addTiles() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>%
   addPolygons(
-    data = tracts_ana, 
+    data = tracts_study_area, 
     fillColor = NULL, #~pal_pop(population_group),
     color = "#273538",
     highlightOptions = highlightOptions(color = "white", weight = 1,
@@ -248,7 +248,7 @@ anacostia_ref_map <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
     fillOpacity = .3,
     #group = "TBD",
     #smoothFactor = 0.2,
-    label = tracts_ana$popup_label,
+    label = tracts_study_area$popup_label,
     labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
   ) #%>%
   # addLegend(
