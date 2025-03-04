@@ -48,6 +48,26 @@ bp_buffer <- read_sf(file.path(peter_path, "BridgeParkBuffer.shp")) %>%
   st_transform(crs = 4326) %>%
   clean_names()
 
+ward_WOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp")) %>% 
+  st_as_sf() %>%
+  st_transform(crs = 4326) %>%
+  clean_names() %>% 
+  select(
+    ward,
+    geometry
+    ) %>% 
+  filter(!(ward %in% c(7, 8)))
+
+ward_EOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp")) %>% 
+  st_as_sf() %>%
+  st_transform(crs = 4326) %>%
+  clean_names() %>% 
+  select(
+    ward,
+    geometry
+  ) %>% 
+  filter(ward %in% c(7, 8))
+
 #tracts file and data dictionary here: https://opendata.dc.gov/datasets/DCGIS::census-tracts-in-2020/about 
 tracts <- read_sf(file.path(peter_path, "Census_Tracts_in_2020/Census_Tracts_in_2020.shp"))%>% 
   st_as_sf() %>%
@@ -122,6 +142,7 @@ small_biz$popup_label <- paste("<b>",small_biz$name,"</b>", "<br>",
 
 
 # Maps! -----------------------------------------------------------------------
+
 #Series of maps showing the neighborhood and various components we will be referencing. 
 #Call outs with specific reference to names of areas of neighborhood - historical names and newer names. 
 #Reverence for long-term residents' understanding of places names.
@@ -250,13 +271,42 @@ anacostia_ref_map <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
     #smoothFactor = 0.2,
     label = tracts_study_area$popup_label,
     labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
-  ) #%>%
+  ) %>%
   # addLegend(
   #   pal = pal_pop,
   #   values = tracts$population_group,
   #   position = "topright",
   #   title = "Population - Urban Areas",
   #   group = "Population - Urban Areas",
-  #   opacity = 1)
+  #   opacity = 1) 
+  #%>% 
+  addPolygons(
+    data = ward_WOTR,
+    fillColor = NULL,
+    color = "#273538",
+    highlightOptions = highlightOptions(color = "white", weight = 1,
+                                      bringToFront = FALSE),
+    opacity = 1,
+    weight = .15,
+    fillOpacity =.75,
+  #group ="Count of FBO Owned Properties - Zip Code",
+  #smoothFactor = 0.2,
+  #label = shp_data$popup_label,
+  #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+  ) %>% 
+  addPolygons(
+    data = ward_EOTR,
+    fillColor = NULL,
+    color = "#273538",
+    highlightOptions = highlightOptions(color = "white", weight = 1,
+                                        bringToFront = FALSE),
+    opacity = 1,
+    weight = 1.2,
+    fillOpacity =.25,
+    #group ="Count of FBO Owned Properties - Zip Code",
+    #smoothFactor = 0.2,
+    #label = shp_data$popup_label,
+    #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+  )
 
 anacostia_ref_map
