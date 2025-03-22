@@ -126,6 +126,10 @@ dc_retail_trends_sales <- dcRetailSalePriceInflation %>%
 # write.csv(dc_retail_trends_sales, file.path(peter_export, "dc_retail_trends_sales.csv"))
 
 
+
+
+
+
 # JOINING across geos -----------------------------------------------------------
 retail_trends_rent <- ana_retail_trends_rent %>% 
   bind_rows(eotr_retail_trends_rent) %>% 
@@ -152,6 +156,10 @@ retail_trends_sales <- ana_retail_trends_sales %>%
   # pivot_wider(names_from = geo, 
   #             values_from = c("sale_price_per_sf_inflation", "sale_price_per_sf_noinflation")) %>% 
   filter(substr(period, 1, 4) %in% years) #filtering for 2015-2024
+
+
+
+
 
 
 # Figures using inflation data ------------------------------------------------
