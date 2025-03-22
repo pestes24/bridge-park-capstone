@@ -20,6 +20,8 @@ peter_export <- "C:/Users/peter/Documents/NYU/Bridge_Park_Capstone"
 # <- read_excel(file.path(peter_path, "/census_crosswalk/nhgis_bg2020_tr2010_36.csv")) %>% 
 #   clean_names() %>%
 
+
+# RETAIL DATA -----------------------------------------------------------------------
 #anacostia data
 AnacostiaRetailRentInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/AnacostiaRetailRentInflation.xlsx") %>% 
   clean_names() 
@@ -33,11 +35,14 @@ AnacostiaRetailSalePriceInflation <- read_excel("C:/Users/peter/Documents/GitHub
 anacostiaRetailSalePriceNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/AnacostiaRetailSalePriceNoInflation.xlsx") %>% 
   clean_names()
 
-ana_retail_trends <- AnacostiaRetailRentInflation %>% 
-  left_join(AnacostiaRetailRentNoInflation) %>% 
-  left_join(AnacostiaRetailSalePriceInflation) %>% 
-  left_join(anacostiaRetailSalePriceNoInflation)
-write.csv(file.path(peter_export, "ana_retail_trends.csv"))
+ana_retail_trends_rent <- AnacostiaRetailRentInflation %>% 
+  left_join(AnacostiaRetailRentNoInflation, by = "period", suffix = c("_inflation", "_noinflation")) 
+
+ana_retail_trends_sales <- AnacostiaRetailSalePriceInflation %>% 
+  left_join(anacostiaRetailSalePriceNoInflation, by = "period", suffix = c("_inflation", "_noinflation"))
+
+write.csv(ana_retail_trends_rent, file.path(peter_export, "ana_retail_trends_rent.csv"))
+write.csv(ana_retail_trends_sales, file.path(peter_export, "ana_retail_trends_sales.csv"))
 
 
 #EOTR data
@@ -53,15 +58,21 @@ EastoftheRiverRetailSalePriceInflation <- read_excel("C:/Users/peter/Documents/G
 EastoftheRiverRetailSalePriceNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverSalePriceNoInflation.xlsx") %>% 
   clean_names()
 
-EastoftheRiver_retail_trends <- EastoftheRiverRetailRentInflation %>% 
-  left_join(EastoftheRiverRetailRentNoInflation) %>% 
-  left_join(EastoftheRiverRetailSalePriceInflation) %>% 
-  left_join(EastoftheRiverRetailSalePriceNoInflation)
-write.csv(file.path(peter_export, "EastoftheRiver_retail_trends.csv"))
+
+eotr_retail_trends_rent <- EastoftheRiverRetailRentInflation %>% 
+  left_join(EastoftheRiverRetailRentNoInflation, by = "period", suffix = c("_inflation", "_noinflation"))
+
+eotr_retail_trends_sales <- EastoftheRiverRetailSalePriceInflation %>% 
+  left_join(EastoftheRiverRetailSalePriceNoInflation, by = "period", suffix = c("_inflation", "_noinflation"))
+
+write.csv(eotr_retail_trends_rent , file.path(peter_export, "eotr_retail_trends_rent.csv"))
+write.csv(eotr_retail_trends_sales , file.path(peter_export, "eotr_retail_trends_sales.csv"))
+
 
 #DC data ---------------------------------------------------------------
 dcRetailRentInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/DCRetailInflation.xlsx") %>% 
-  clean_names() 
+  clean_names() %>%
+  
 
 dcRetailRentNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/DCRetailNoInflation.xlsx") %>% 
   clean_names() 
@@ -70,11 +81,30 @@ dcRetailSalePriceInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge
   clean_names() 
 
 dcRetailSalePriceNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/DCRetailSalePriceNoInflation.xlsx") %>% 
-  clean_names()
+  clean_names() 
 
-dc_retail_trends <- dcRetailRentInflation %>% 
-  left_join(dcRetailRentNoInflation) %>% 
-  left_join(dcRetailSalePriceInflation) %>% 
-  left_join(dcRetailSalePriceNoInflation)
+dc_retail_trends_rent <- dcRetailRentInflation %>% 
+  left_join(dcRetailRentNoInflation, by = "period", suffix = c("_inflation", "_noinflation")) 
 
-write.csv(file.path(peter_export, "dc_retail_trends.csv"))
+dc_retail_trends_sales <- dcRetailSalePriceInflation %>% 
+  left_join(dcRetailSalePriceNoInflation, by = "period", suffix = c("_inflation", "_noinflation"))
+
+
+write.csv(dc_retail_trends_rent, file.path(peter_export, "dc_retail_trends_rent.csv"))
+write.csv(dc_retail_trends_sales, file.path(peter_export, "dc_retail_trends_sales.csv"))
+
+
+# JOINED across geos ---------------
+retail_trends_rent <- ana_retail_trends_rent %>% 
+  left_join(eotr_retail_trends_rent, by = "period", suffix = c("_ana", "_eotr"))  %>% 
+  left_join(dc_retail_trends_rent, by = "period", suffix = c("", "_noinflation"))
+
+retail_trends_sales <- ana_retail_trends_sales %>% 
+  left_join(eotr_retail_trends_sales, by = "period", suffix = c("_ana", "_eotr")) %>% 
+  left_join(dc_retail_trends_sales)
+
+
+
+# OFFICE DATA -----------------------------------------------------------------------
+
+
