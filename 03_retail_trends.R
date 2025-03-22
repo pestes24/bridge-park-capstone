@@ -8,6 +8,8 @@ library(lubridate)
 library(ggplot2)
 library(stringr)
 library(urbnthemes)
+library(gapminder)
+library(zoo)
 
 #paths - can just Find & Replace when switching 
 peter_path <- "C:/Users/peter/Documents/GitHub/bridge-park-capstone/"
@@ -18,6 +20,10 @@ peter_export <- "C:/Users/peter/Documents/NYU/Bridge_Park_Capstone"
 
 # <- read_excel(file.path(peter_path, "/census_crosswalk/nhgis_bg2020_tr2010_36.csv")) %>% 
 #   clean_names() %>%
+
+#Relevant Period
+years <- as.character(2015:2024)  # Create a vector of years
+
 
 
 # RETAIL DATA -----------------------------------------------------------------------
@@ -39,10 +45,10 @@ anacostiaRetailSalePriceNoInflation <- read_excel("C:/Users/peter/Documents/GitH
   mutate(geo = "Anacostia")
 
 ana_retail_trends_rent <- AnacostiaRetailRentInflation %>% 
-  left_join(AnacostiaRetailRentNoInflation, by = "period", suffix = c("_inflation", "_noinflation")) 
+  left_join(AnacostiaRetailRentNoInflation, by = c("period","geo"), suffix = c("_inflation", "_noinflation")) 
 
 ana_retail_trends_sales <- AnacostiaRetailSalePriceInflation %>% 
-  left_join(anacostiaRetailSalePriceNoInflation, by = "period", suffix = c("_inflation", "_noinflation"))
+  left_join(anacostiaRetailSalePriceNoInflation, by = c("period","geo"), suffix = c("_inflation", "_noinflation"))
 
 # write.csv(ana_retail_trends_rent, file.path(peter_export, "ana_retail_trends_rent.csv"))
 # write.csv(ana_retail_trends_sales, file.path(peter_export, "ana_retail_trends_sales.csv"))
@@ -67,10 +73,10 @@ EastoftheRiverRetailSalePriceNoInflation <- read_excel("C:/Users/peter/Documents
 
 
 eotr_retail_trends_rent <- EastoftheRiverRetailRentInflation %>% 
-  left_join(EastoftheRiverRetailRentNoInflation, by = "period", suffix = c("_inflation", "_noinflation"))
+  left_join(EastoftheRiverRetailRentNoInflation, by = c("period","geo"), suffix = c("_inflation", "_noinflation"))
 
 eotr_retail_trends_sales <- EastoftheRiverRetailSalePriceInflation %>% 
-  left_join(EastoftheRiverRetailSalePriceNoInflation, by = "period", suffix = c("_inflation", "_noinflation"))
+  left_join(EastoftheRiverRetailSalePriceNoInflation, by = c("period","geo"), suffix = c("_inflation", "_noinflation"))
 
 # write.csv(eotr_retail_trends_rent, file.path(peter_export, "eotr_retail_trends_rent.csv"))
 # write.csv(eotr_retail_trends_sales, file.path(peter_export, "eotr_retail_trends_sales.csv"))
@@ -94,28 +100,63 @@ dcRetailSalePriceNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/brid
   mutate(geo = "dc")
 
 dc_retail_trends_rent <- dcRetailRentInflation %>% 
-  left_join(dcRetailRentNoInflation, by = "period", suffix = c("_inflation", "_noinflation")) 
+  left_join(dcRetailRentNoInflation, by = c("period","geo"), suffix = c("_inflation", "_noinflation")) 
 
 dc_retail_trends_sales <- dcRetailSalePriceInflation %>% 
-  left_join(dcRetailSalePriceNoInflation, by = "period", suffix = c("_inflation", "_noinflation"))
+  left_join(dcRetailSalePriceNoInflation, by = c("period","geo"), suffix = c("_inflation", "_noinflation"))
 
 
 # write.csv(dc_retail_trends_rent, file.path(peter_export, "dc_retail_trends_rent.csv"))
 # write.csv(dc_retail_trends_sales, file.path(peter_export, "dc_retail_trends_sales.csv"))
 
 
-# JOINED across geos ---------------
+# JOINING across geos -----------------------------------------------------------
 retail_trends_rent <- ana_retail_trends_rent %>% 
-  full_join(eotr_retail_trends_rent)
-, by = "period", suffix = c("_ana", "_eotr"))  %>% 
-  left_join(dc_retail_trends_rent, by = "period", suffix = c("", "_noinflation"))
+  bind_rows(eotr_retail_trends_rent) %>% 
+  bind_rows(dc_retail_trends_rent) %>% 
+  mutate(across(starts_with("asking"), as.double),
+         year = as.numeric(str_sub(period, 1, 4)),  # Extract year
+         quarter = as.numeric(str_sub(period, 7, 7)),  # Extract quarter number
+         period_date = make_date(year, (quarter - 1) * 3 + 1, 1)  # Convert to first day of the quarter
+         ) %>% 
+  # pivot_wider(names_from = geo, 
+  #             values_from = c("market_asking_rent_inflation","market_asking_rent_noinflation","asking_rent_inflation","asking_rent_noinflation")) %>% 
+  filter(substr(period, 1, 4) %in% years) 
+  #filtering for 2015-2024 
+  #2018 inflation data missing for Anacostia
 
 retail_trends_sales <- ana_retail_trends_sales %>% 
-  left_join(eotr_retail_trends_sales, by = "period", suffix = c("_ana", "_eotr")) %>% 
-  left_join(dc_retail_trends_sales)
+  bind_rows(eotr_retail_trends_sales) %>% 
+  mutate(across(starts_with("sale"), as.double)) %>% 
+  bind_rows(dc_retail_trends_sales) %>% 
+  pivot_wider(names_from = geo, 
+              values_from = c("sale_price_per_sf_inflation", "sale_price_per_sf_noinflation")) %>% 
+  filter(substr(period, 1, 4) %in% years) #filtering for 2015-2024
 
 
+# Figures using inflation data ------------------------------------------------
 
-# OFFICE DATA -----------------------------------------------------------------------
+rent_inflation_plot <- retail_trends_rent %>%
+  # filter(country %in% c("Australia", "Canada", "New Zealand")) %>%
+  mutate(geo = factor(geo, levels = c("Anacostia", "eotr", "dc"))) %>%
+  ggplot(aes(
+    x = period_date, 
+    y = market_asking_rent_inflation, 
+    color = geo)) +
+  geom_line() +
+  scale_x_date(expand = expansion(mult = c(0.02, 0.02)), 
+               date_breaks = "1 year",
+               date_labels = "%Y"
+               ) + 
+  scale_y_continuous(expand = expansion(mult = c(0, 0.002)), 
+                     breaks = seq(0, 60, by = 5),  
+                     labels = scales::dollar_format(),  
+                     limits = c(0, 60)) +
+  labs(x = "Period",
+       y = "Market Asking Rent (per square foot, adjusted for inflation)",
+       color = "Area")+
+  theme_minimal()
+
+rent_inflation_plot
 
 
