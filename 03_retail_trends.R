@@ -11,6 +11,8 @@ library(urbnthemes)
 library(gapminder)
 library(zoo)
 
+set_urbn_defaults(style = "print")
+
 # Installation of urbnthemes
 # install.packages("remotes")
 # remotes::install_github("UrbanInstitute/urbnthemes", build_vignettes = TRUE)
@@ -34,8 +36,6 @@ peter_path <- "C:/Users/peter/Documents/GitHub/bridge-park-capstone/"
 peter_export <- "C:/Users/peter/Documents/NYU/Bridge_Park_Capstone"
 #henry_export <- ""
 
-# <- read_excel(file.path(peter_path, "/census_crosswalk/nhgis_bg2020_tr2010_36.csv")) %>% 
-#   clean_names() %>%
 
 #Relevant Period
 years <- as.character(2015:2024)  # Create a vector of years
@@ -176,18 +176,12 @@ rent_inflation_plot <- retail_trends_rent %>%
                      limits = c(0, 60)
                      ) +
   labs(title = "Trends in Retail Rents",
+       subtitle = "(per square foot, adjusted for inflation)",
        x = "",
-       y = "Market Asking Rent (per square foot, adjusted for inflation)",
+       y = "Market Asking Rent ",
        color = ""
-       )+
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    panel.background = element_blank(),
-    axis.ticks = element_blank(),
-    axis.line = element_line(colour = "darkgray")
-  )
+       ) +
+  remove_ticks()
 
 rent_inflation_plot
 
@@ -202,7 +196,12 @@ sales_inflation_plot <- retail_trends_sales %>%
     color = geo
   )) +
   geom_line(linewidth = .8 #slightly thicker line
-  ) + 
+    ) + 
+  # geom_smooth(method = lm, 
+  #             se = FALSE, 
+  #             linewidth = .8,
+  #             linetype="dashed"
+  #             ) +
   scale_x_date(expand = expansion(mult = c(0.02, 0.02)), 
                date_breaks = "1 year",
                date_labels = "%Y"
@@ -216,16 +215,43 @@ sales_inflation_plot <- retail_trends_sales %>%
        x = "",
        y = "Sales Prices (per square foot, adjusted for inflation)",
        color = ""
-  )+
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    panel.background = element_blank(),
-    axis.ticks = element_blank(),
-    axis.line = element_line(colour = "darkgray")
-  )
+  ) +
+  remove_ticks()
 
 sales_inflation_plot
 
+
+sales_inflation_plot_trendline <- retail_trends_sales %>%
+  #filter(period %in% c("", "", "")) %>%
+  mutate(geo = factor(geo, levels = c("Anacostia", "eotr", "dc"))) %>%
+  ggplot(aes(
+    x = period_date, 
+    y = sale_price_per_sf_inflation, 
+    color = geo
+  )) +
+  # geom_point(#linewidth = .8 #slightly thicker line
+  # ) + 
+  geom_smooth(method = lm, 
+              se = FALSE, 
+              linewidth = .8,
+              linetype="dashed"
+  ) +
+  scale_x_date(expand = expansion(mult = c(0.02, 0.02)), 
+               date_breaks = "1 year",
+               date_labels = "%Y"
+  ) + 
+  scale_y_continuous(expand = expansion(mult = c(0, 0.002)), 
+                     breaks = seq(0, 1000, by = 250),  
+                     labels = scales::dollar_format(),  
+                     limits = c(0, 1050)
+  ) +
+  labs(title = "Trends in Sales Prices",
+       subtitle = "(per square foot, adjusted for inflation)",
+       x = "",
+       y = "Sales Prices (per square foot)",
+       color = ""
+  ) + 
+  remove_ticks()
+
+sales_inflation_plot_trendline
 
