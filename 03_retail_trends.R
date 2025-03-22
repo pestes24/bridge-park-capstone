@@ -11,7 +11,23 @@ library(urbnthemes)
 library(gapminder)
 library(zoo)
 
-#paths - can just Find & Replace when switching 
+# Installation of urbnthemes
+# install.packages("remotes")
+# remotes::install_github("UrbanInstitute/urbnthemes", build_vignettes = TRUE)
+# Fonts
+# The Urban Institute uses Lato font for publications. After installing urbnthemes, submit urbnthemes::lato_test() to see if Lato is imported and registered.
+# 
+# If Lato isn’t imported and registered, install Lato and then submit urbnthemes::lato_install(). If you are on a Windows, you may need to install ghostscript and then submit Sys.setenv(R_GSCMD = "link to the ghostscript .exe") before running urbnthemes::lato_install().
+# 
+# Waffle charts with glyphs require fontawesome. fontawesome_test() and fontawesome_install() are the fontawesome versions of the above functions. Be sure to install fontawesome from here.
+# 
+# Usage
+# Always load library(urbnthemes) after library(ggplot2) or library(tidyverse).
+
+
+
+
+#paths - can just Find & Replace when switching -------------------------------
 peter_path <- "C:/Users/peter/Documents/GitHub/bridge-park-capstone/"
 #henry_path <- "/Users/hhoffmann/Documents/GitHub/" 
 
@@ -129,21 +145,27 @@ retail_trends_sales <- ana_retail_trends_sales %>%
   bind_rows(eotr_retail_trends_sales) %>% 
   mutate(across(starts_with("sale"), as.double)) %>% 
   bind_rows(dc_retail_trends_sales) %>% 
-  pivot_wider(names_from = geo, 
-              values_from = c("sale_price_per_sf_inflation", "sale_price_per_sf_noinflation")) %>% 
+  mutate(year = as.numeric(str_sub(period, 1, 4)),  # Extract year
+         quarter = as.numeric(str_sub(period, 7, 7)),  # Extract quarter number
+         period_date = make_date(year, (quarter - 1) * 3 + 1, 1)  # Convert to first day of the quarter
+         ) %>% 
+  # pivot_wider(names_from = geo, 
+  #             values_from = c("sale_price_per_sf_inflation", "sale_price_per_sf_noinflation")) %>% 
   filter(substr(period, 1, 4) %in% years) #filtering for 2015-2024
 
 
 # Figures using inflation data ------------------------------------------------
 
 rent_inflation_plot <- retail_trends_rent %>%
-  # filter(country %in% c("Australia", "Canada", "New Zealand")) %>%
+  #filter(period %in% c("", "", "")) %>%
   mutate(geo = factor(geo, levels = c("Anacostia", "eotr", "dc"))) %>%
   ggplot(aes(
     x = period_date, 
     y = market_asking_rent_inflation, 
-    color = geo)) +
-  geom_line() +
+    color = geo
+    )) +
+  geom_line(linewidth = .8 #slightly thicker line
+            ) + 
   scale_x_date(expand = expansion(mult = c(0.02, 0.02)), 
                date_breaks = "1 year",
                date_labels = "%Y"
@@ -151,12 +173,59 @@ rent_inflation_plot <- retail_trends_rent %>%
   scale_y_continuous(expand = expansion(mult = c(0, 0.002)), 
                      breaks = seq(0, 60, by = 5),  
                      labels = scales::dollar_format(),  
-                     limits = c(0, 60)) +
-  labs(x = "Period",
+                     limits = c(0, 60)
+                     ) +
+  labs(title = "Trends in Retail Rents",
+       x = "",
        y = "Market Asking Rent (per square foot, adjusted for inflation)",
-       color = "Area")+
-  theme_minimal()
+       color = ""
+       )+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line = element_line(colour = "darkgray")
+  )
 
 rent_inflation_plot
+
+
+
+sales_inflation_plot <- retail_trends_sales %>%
+  #filter(period %in% c("", "", "")) %>%
+  mutate(geo = factor(geo, levels = c("Anacostia", "eotr", "dc"))) %>%
+  ggplot(aes(
+    x = period_date, 
+    y = sale_price_per_sf_inflation, 
+    color = geo
+  )) +
+  geom_line(linewidth = .8 #slightly thicker line
+  ) + 
+  scale_x_date(expand = expansion(mult = c(0.02, 0.02)), 
+               date_breaks = "1 year",
+               date_labels = "%Y"
+  ) + 
+  scale_y_continuous(expand = expansion(mult = c(0, 0.002)), 
+                     breaks = seq(0, 3500, by = 500),  
+                     labels = scales::dollar_format(),  
+                     limits = c(0, 3500)
+  ) +
+  labs(title = "Trends in Sales Prices",
+       x = "",
+       y = "Sales Prices (per square foot, adjusted for inflation)",
+       color = ""
+  )+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line = element_line(colour = "darkgray")
+  )
+
+sales_inflation_plot
 
 
