@@ -7,7 +7,6 @@ library(tidyr)
 library(lubridate)
 library(ggplot2)
 library(stringr)
-library(lubridate)
 library(urbnthemes)
 
 #paths - can just Find & Replace when switching 
@@ -107,7 +106,8 @@ dc_retail_trends_sales <- dcRetailSalePriceInflation %>%
 
 # JOINED across geos ---------------
 retail_trends_rent <- ana_retail_trends_rent %>% 
-  left_join(eotr_retail_trends_rent, by = "period", suffix = c("_ana", "_eotr"))  %>% 
+  full_join(eotr_retail_trends_rent)
+, by = "period", suffix = c("_ana", "_eotr"))  %>% 
   left_join(dc_retail_trends_rent, by = "period", suffix = c("", "_noinflation"))
 
 retail_trends_sales <- ana_retail_trends_sales %>% 
