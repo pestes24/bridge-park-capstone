@@ -222,7 +222,8 @@ sales_inflation_plot <- retail_trends_sales %>%
   labs(title = "Trends in Sales Prices",
        x = "",
        y = "Sales Prices (per square foot, adjusted for inflation)",
-       color = ""
+       color = "",
+       caption = "Source: CoStar. ADD HERE Inflation adjustment info"
   ) +
   remove_ticks()
 
@@ -257,7 +258,8 @@ sales_inflation_plot_trendline <- retail_trends_sales %>%
        subtitle = "(per square foot, adjusted for inflation)",
        x = "",
        y = "Sales Prices (per square foot)",
-       color = ""
+       color = "",
+       caption = "Source: CoStar. ADD HERE Inflation adjustment info"
   ) + 
   remove_ticks()
 
