@@ -30,7 +30,7 @@ set_urbn_defaults(style = "print")
 
 
 #paths - can just Find & Replace when switching -------------------------------
-peter_path <- "C:/Users/peter/Documents/GitHub/bridge-park-capstone/"
+peter_path <- "C:/Users/peter/Documents/GitHub/bridge-park-capstone/CoStar_Rent_Data/"
 #henry_path <- "/Users/hhoffmann/Documents/GitHub/" 
 
 peter_export <- "C:/Users/peter/Documents/NYU/Bridge_Park_Capstone"
@@ -71,19 +71,25 @@ ana_retail_trends_sales <- AnacostiaRetailSalePriceInflation %>%
 
 
 #EOTR data
-EastoftheRiverRetailRentInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverRetailInflation.xlsx") %>% 
+EastoftheRiverRetailRentInflation <- read_excel(
+  "C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverRetailInflation.xlsx"
+  ) %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
 
-EastoftheRiverRetailRentNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverRetailRentNoInflation.xlsx") %>% 
+EastoftheRiverRetailRentNoInflation <- read_excel(
+  "C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverRetailRentNoInflation.xlsx"
+  ) %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
 
-EastoftheRiverRetailSalePriceInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverRetailSalePriceInflation.xlsx") %>% 
+EastoftheRiverRetailSalePriceInflation <- read_excel(
+  "C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverRetailSalePriceInflation.xlsx"
+  ) %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
 
-EastoftheRiverRetailSalePriceNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverSalePriceNoInflation.xlsx") %>% 
+EastoftheRiverRetailSalePriceNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverRetailSalePriceNoInflation.xlsx") %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
 
