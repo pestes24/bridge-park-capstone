@@ -265,6 +265,7 @@ sales_inflation_plot_gg <- office_trends_sales %>%
   #           the code still runs, just no changes in the plot itself even after I clear it out
   #Peter reply: 
   labs(title = "Trends in Sales Prices",
+       subtitle = "(per square foot, adjusted for inflation)",
        x = "",
        y = "Sales Prices (per square foot, adjusted for inflation)",
        color = "",
@@ -272,11 +273,47 @@ sales_inflation_plot_gg <- office_trends_sales %>%
   ) +
   theme(panel.grid.major.y = element_line(),
         panel.grid.minor.y = element_line()
-  ) +
-    print(sales_inflation_plot_gg)
-  
-  
+  ) 
 
+sales_inflation_plot_gg
+  
+  
+sales_inflation_plot_gg_trendline <- office_trends_sales %>%
+  #filter(period %in% c("", "", "")) %>%
+  mutate(geo = factor(geo, levels = c("Anacostia", "eotr", "dc"))) %>%
+  ggplot(aes(
+    x = period_date, 
+    y = sale_price_per_sf_inflation, 
+    color = geo
+  )) +
+  geom_smooth(method = lm, 
+              se = FALSE, 
+              linewidth = .8,
+              linetype="dashed"
+  ) +
+  scale_x_date(expand = expansion(mult = c(0.02, 0.02)), 
+               date_breaks = "1 year",
+               date_labels = "%Y"
+  ) + 
+  scale_y_continuous(expand = expansion(mult = c(0, 0.002)), 
+                     breaks = seq(0, 1100, by = 250),  
+                     labels = scales::dollar_format(),  
+                     limits = c(0, 1100)
+  ) + 
+  scale_color_discrete(
+    name="Geography", 
+    labels = c("Anacostia", "East of the River", "Washington, DC")
+  ) +
+  labs(title = "Trends in Sales Prices",
+       subtitle = "(per square foot, adjusted for inflation)",
+       x = "",
+       y = "Sales Prices (per square foot)",
+       color = "",
+       caption = "Source: CoStar. ADD HERE Inflation adjustment info"
+  ) + 
+  remove_ticks()
+
+sales_inflation_plot_gg_trendline
   
 
 
