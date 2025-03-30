@@ -44,19 +44,27 @@ years <- as.character(2015:2024)  # Create a vector of years
 
 # RETAIL DATA -----------------------------------------------------------------------
 #anacostia data
-AnacostiaRetailRentInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/AnacostiaRetailRentInflation.xlsx") %>% 
+AnacostiaRetailRentInflation <- read_excel(
+  file.path(peter_path,"AnacostiaRetailRentInflation.xlsx")
+  ) %>% 
   clean_names() %>% 
   mutate(geo = "Anacostia")
   
-AnacostiaRetailRentNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/AnacostiaRetailRentNoInflation.xlsx") %>% 
+AnacostiaRetailRentNoInflation <- read_excel(
+  file.path(peter_path,"AnacostiaRetailRentNoInflation.xlsx")
+  ) %>% 
   clean_names() %>% 
   mutate(geo = "Anacostia")
 
-AnacostiaRetailSalePriceInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/AnacostiaRetailSalePriceInflation.xlsx") %>% 
+AnacostiaRetailSalePriceInflation <- read_excel(
+  file.path(peter_path,"AnacostiaRetailSalePriceInflation.xlsx")
+  ) %>% 
   clean_names() %>% 
   mutate(geo = "Anacostia")
 
-anacostiaRetailSalePriceNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/AnacostiaRetailSalePriceNoInflation.xlsx") %>% 
+anacostiaRetailSalePriceNoInflation <- read_excel(
+  file.path(peter_path,"AnacostiaRetailSalePriceNoInflation.xlsx")
+  ) %>% 
   clean_names() %>% 
   mutate(geo = "Anacostia")
 
@@ -72,24 +80,26 @@ ana_retail_trends_sales <- AnacostiaRetailSalePriceInflation %>%
 
 #EOTR data
 EastoftheRiverRetailRentInflation <- read_excel(
-  "C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverRetailInflation.xlsx"
+  file.path(peter_path,"EastoftheRiverRetailInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
 
 EastoftheRiverRetailRentNoInflation <- read_excel(
-  "C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverRetailRentNoInflation.xlsx"
+  file.path(peter_path,"EastoftheRiverRetailRentNoInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
 
 EastoftheRiverRetailSalePriceInflation <- read_excel(
-  "C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverRetailSalePriceInflation.xlsx"
+  file.path(peter_path,"EastoftheRiverRetailSalePriceInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
 
-EastoftheRiverRetailSalePriceNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/EastoftheRiverRetailSalePriceNoInflation.xlsx") %>% 
+EastoftheRiverRetailSalePriceNoInflation <- read_excel(
+  file.path(peter_path,"EastoftheRiverRetailSalePriceNoInflation.xlsx")
+  ) %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
 
@@ -105,19 +115,27 @@ eotr_retail_trends_sales <- EastoftheRiverRetailSalePriceInflation %>%
 
 
 #DC data ---------------------------------------------------------------
-dcRetailRentInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/DCRetailInflation.xlsx") %>% 
+dcRetailRentInflation <- read_excel(
+  file.path(peter_path,"DCRetailInflation.xlsx")
+  ) %>% 
   clean_names() %>%
   mutate(geo = "dc")
 
-dcRetailRentNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/DCRetailNoInflation.xlsx") %>% 
+dcRetailRentNoInflation <- read_excel(
+  file.path(peter_path,"DCRetailNoInflation.xlsx")
+  ) %>% 
   clean_names() %>% 
   mutate(geo = "dc") 
 
-dcRetailSalePriceInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/DCRetailSalePriceInflation.xlsx") %>% 
+dcRetailSalePriceInflation <- read_excel(
+  file.path(peter_path,"DCRetailSalePriceInflation.xlsx")
+  ) %>% 
   clean_names() %>% 
   mutate(geo = "dc")
 
-dcRetailSalePriceNoInflation <- read_excel("C:/Users/peter/Documents/GitHub/bridge-park-capstone/DCRetailSalePriceNoInflation.xlsx") %>% 
+dcRetailSalePriceNoInflation <- read_excel(
+  file.path(peter_path,"DCRetailSalePriceNoInflation.xlsx")
+  ) %>% 
   clean_names() %>% 
   mutate(geo = "dc")
 
@@ -185,7 +203,7 @@ rent_inflation_plot <- retail_trends_rent %>%
                date_labels = "%Y"
                ) + 
   scale_y_continuous(expand = expansion(mult = c(0, 0.002)), 
-                     breaks = seq(0, 60, by = 5),  
+                     breaks = seq(5, 65, by = 5),  
                      labels = scales::dollar_format(),  
                      limits = c(0, 60)
                      ) + 
@@ -220,12 +238,13 @@ sales_inflation_plot <- retail_trends_sales %>%
   #             linewidth = .8,
   #             linetype="dashed"
   #             ) +
+  # Commenting out and creating new trend line graph below
   scale_x_date(expand = expansion(mult = c(0.02, 0.02)), 
                date_breaks = "1 year",
                date_labels = "%Y"
   ) + 
   scale_y_continuous(expand = expansion(mult = c(0, 0.002)), 
-                     breaks = seq(0, 3500, by = 500),  
+                     breaks = seq(500, 3500, by = 500),  
                      labels = scales::dollar_format(),  
                      limits = c(0, 3500)
   ) + 
@@ -238,8 +257,7 @@ sales_inflation_plot <- retail_trends_sales %>%
        y = "Sales Prices (per square foot, adjusted for inflation)",
        color = "",
        caption = "Source: CoStar. ADD HERE Inflation adjustment info"
-  ) +
-  remove_ticks()
+  )
 
 sales_inflation_plot
 
@@ -264,7 +282,7 @@ sales_inflation_plot_trendline <- retail_trends_sales %>%
                date_labels = "%Y"
   ) + 
   scale_y_continuous(expand = expansion(mult = c(0, 0.002)), 
-                     breaks = seq(0, 1000, by = 250),  
+                     breaks = seq(250, 1000, by = 250),  
                      labels = scales::dollar_format(),  
                      limits = c(0, 1050)
   ) + 
@@ -278,8 +296,7 @@ sales_inflation_plot_trendline <- retail_trends_sales %>%
        y = "Sales Prices (per square foot)",
        color = "",
        caption = "Source: CoStar. ADD HERE Inflation adjustment info"
-  ) + 
-  remove_ticks()
+  ) 
 
 sales_inflation_plot_trendline
 
