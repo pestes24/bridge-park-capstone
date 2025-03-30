@@ -10,11 +10,12 @@ library(stringr)
 library(lubridate)
 
 install.packages("urbnthemes")
+set_urbn_defaults(style = "print")
 
 library(urbnthemes)
 
 #paths - can just Find & Replace when switching 
-#peter_path <- "C:/Users/peter/Documents/GitHub/bridge-park-capstone/CoStar_Rent_Data"
+peter_path <- "C:/Users/peter/Documents/GitHub/bridge-park-capstone/CoStar_Rent_Data"
 henry_path <- "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/" 
 
 peter_export <- "C:/Users/peter/Documents/NYU/Bridge_Park_Capstone"
@@ -28,29 +29,29 @@ peter_export <- "C:/Users/peter/Documents/NYU/Bridge_Park_Capstone"
 #anacostia data
 #change file names to match in local drive
 AnacostiaOFFICERentInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/AnacostiaRentOfficeInflation.xlsx"
-  #file.path(peter_path,"AnacostiaRentOfficeInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/AnacostiaRentOfficeInflation.xlsx"
+  file.path(peter_path,"AnacostiaRentOfficeInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "Anacostia")
 
 AnacostiaOFFICERentNoInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/AnacostiaRentOfficeNoInflation.xlsx"
-  #file.path(peter_path,"AnacostiaRentOfficeNoInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/AnacostiaRentOfficeNoInflation.xlsx"
+  file.path(peter_path,"AnacostiaRentOfficeNoInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "Anacostia")
 
 AnacostiaOFFICESalePriceInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/AnacostiaOfficeSalePriceInflation.xlsx" 
-  #file.path(peter_path,"AnacostiaOfficeSalePriceInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/AnacostiaOfficeSalePriceInflation.xlsx" 
+  file.path(peter_path,"AnacostiaOfficeSalePriceInflation.xlsx")
   ) %>%
   clean_names() %>% 
   mutate(geo = "Anacostia")
 
 AnacostiaOFFICESalePriceNoInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/AnacostiaOfficeSalePriceNoInflation.xlsx"
-  #file.path(peter_path,"AnacostiaOfficeSalePriceNoInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/AnacostiaOfficeSalePriceNoInflation.xlsx"
+  file.path(peter_path,"AnacostiaOfficeSalePriceNoInflation.xlsx")
   ) %>%
   clean_names() %>% 
   mutate(geo = "Anacostia")
@@ -68,29 +69,29 @@ ana_OFFICE_trends_sales <- AnacostiaOFFICESalePriceInflation %>%
 #EOTR data
 #change file names to match in local drive
 EastoftheRiverOFFICERentInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/EastoftheRiverOfficeRentInflation.xlsx"
-  #file.path(peter_path,"EastoftheRiverOfficeRentInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/EastoftheRiverOfficeRentInflation.xlsx"
+  file.path(peter_path,"EastoftheRiverOfficeRentInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
 
 EastoftheRiverOFFICERentNoInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/EastoftheRiverOfficeRentNoInflation.xlsx"
-  #file.path(peter_path,"EastoftheRiverOfficeRentNoInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/EastoftheRiverOfficeRentNoInflation.xlsx"
+  file.path(peter_path,"EastoftheRiverOfficeRentNoInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
 
 EastoftheRiverOFFICESalePriceInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/EastoftheRiverOfficeSalePriceInflation.xlsx"
-  #file.path(peter_path,"EastoftheRiverOfficeSalePriceInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/EastoftheRiverOfficeSalePriceInflation.xlsx"
+  file.path(peter_path,"EastoftheRiverOfficeSalePriceInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
 
 EastoftheRiverOFFICESalePriceNoInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/EastoftheRiverOfficeSalePriceNoInflation.xlsx"
-  #file.path(peter_path,"EastoftheRiverOfficeSalePriceNoInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/EastoftheRiverOfficeSalePriceNoInflation.xlsx"
+  file.path(peter_path,"EastoftheRiverOfficeSalePriceNoInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "eotr")
@@ -108,29 +109,29 @@ eotr_OFFICE_trends_sales <- EastoftheRiverOFFICESalePriceInflation %>%
 
 #DC data ---------------------------------------------------------------
 dcOFFICERentInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/DCOfficeRentInflation.xlsx"
-  #file.path(peter_path,"DCOfficeRentInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/DCOfficeRentInflation.xlsx"
+  file.path(peter_path,"DCOfficeRentInflation.xlsx")
   ) %>% 
   clean_names() %>%
   mutate(geo = "dc")
 
 dcOFFICERentNoInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/DCOfficeRentNoInflation.xlsx"
-  #file.path(peter_path,"DCOfficeRentNoInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/DCOfficeRentNoInflation.xlsx"
+  file.path(peter_path,"DCOfficeRentNoInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "dc") 
 
 dcOFFICESalePriceInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/DCOfficeSalePriceInflation.xlsx"
-  #file.path(peter_path,"DCOfficeSalePriceInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/DCOfficeSalePriceInflation.xlsx"
+  file.path(peter_path,"DCOfficeSalePriceInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "dc")
 
 dcOFFICESalePriceNoInflation <- read_excel(
-  "/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/DCOfficeSalePriceNoInflation.xlsx"
-  #file.path(peter_path,"DCOfficeSalePriceNoInflation.xlsx")
+  #"/Users/hhoffmann/Documents/Bridge Park Capstone Rent Trends Final/DCOfficeSalePriceNoInflation.xlsx"
+  file.path(peter_path,"DCOfficeSalePriceNoInflation.xlsx")
   ) %>% 
   clean_names() %>% 
   mutate(geo = "dc")
@@ -185,10 +186,13 @@ office_trends_sales <- ana_OFFICE_trends_sales %>%
 # I just changed the variables names and added geom_line, and it's close now! 
 # If you want to look at my ggplot code, you can play around with it and build out a similar version 
 
+
+
+
 # GGPLOT Figures using inflation data ------------------------------------------------
 
 # RENT INFLATION PLOT
-  rent_inflation_plot <- office_trends_rent %>% 
+rent_inflation_plot <- office_trends_rent %>% 
 mutate(geo = factor(geo, levels = c("Anacostia", "eotr", "dc"))) %>%
   ggplot(aes(
     x = period_date, 
@@ -205,28 +209,30 @@ mutate(geo = factor(geo, levels = c("Anacostia", "eotr", "dc"))) %>%
                date_labels = "%Y"
   ) + 
   scale_y_continuous(expand = expansion(mult = c(0, 0.002)), 
-                     breaks = seq(30, 70, by = 10),  
+                     breaks = seq(0, 70, by = 20),  
                      labels = scales::dollar_format(),  
-                     limits = c(30, 70)
-  ) +
+                     limits = c(0, 70)
+  ) + 
+  scale_color_discrete(
+    name="Geography", 
+    labels = c("Anacostia", "East of the River", "Washington, DC")
+    ) +
   labs(title = "Trends in Office Rents",
        subtitle = "(per square foot, adjusted for inflation)",
        x = "Year",
        y = "Market Asking Rent ",
-       color = "Geography"
-  ) +
-       guides(
-         color = guide_legend(title = "Geography", labels = c("Anacostia", "East of the River", "Washington, DC"))
-       ) + # COMMENT - not working here, but I was trying to figure out how to relabel the legend from the names up top. I assumed those names are correlated to the geos in the excel file. 
-  theme(panel.grid.major.y = element_line(),
-        panel.grid.minor.y = element_line()
-  ) +
-  print(rent_inflation_plot)
+       color = "Geography",
+       caption = "Source: CoStar. ADD HERE Inflation adjustment info"
+  ) 
+
+  
+rent_inflation_plot 
 # COMMENT idea here could be that we include highest and lowest rental numbers across the ten year period on the graph
   
-  
+
+
 # SALES INFLATION PLOT
-  sales_inflation_plot_gg <- office_trends_sales %>%
+sales_inflation_plot_gg <- office_trends_sales %>%
   #filter(period %in% c("", "", "")) %>%
   mutate(geo = factor(geo, levels = c("Anacostia", "eotr", "dc"))) %>%
   ggplot(aes(
@@ -249,7 +255,15 @@ mutate(geo = factor(geo, levels = c("Anacostia", "eotr", "dc"))) %>%
                      breaks = seq(0, 1200, by = 200),  
                      labels = scales::dollar_format(),  
                      limits = c(0, 1200)
-  ) + #COMMENT - I'm getting some weirdness here and I saw this online too; the y-axis changes I am making are not showing up in the plot for some reason; the code still runs, just no changes in the plot itself even after I clear it out
+  ) + 
+  scale_color_discrete(
+    name="Geography", 
+    labels = c("Anacostia", "East of the River", "Washington, DC")
+  ) + 
+  #COMMENT - I'm getting some weirdness here and I saw this online too; 
+  #           the y-axis changes I am making are not showing up in the plot for some reason; 
+  #           the code still runs, just no changes in the plot itself even after I clear it out
+  #Peter reply: 
   labs(title = "Trends in Sales Prices",
        x = "",
        y = "Sales Prices (per square foot, adjusted for inflation)",
