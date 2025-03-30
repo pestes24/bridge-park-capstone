@@ -10,9 +10,9 @@ library(stringr)
 library(lubridate)
 
 install.packages("urbnthemes")
-set_urbn_defaults(style = "print")
 
 library(urbnthemes)
+set_urbn_defaults(style = "print")
 
 #paths - can just Find & Replace when switching 
 peter_path <- "C:/Users/peter/Documents/GitHub/bridge-park-capstone/CoStar_Rent_Data"
@@ -209,7 +209,7 @@ mutate(geo = factor(geo, levels = c("Anacostia", "eotr", "dc"))) %>%
                date_labels = "%Y"
   ) + 
   scale_y_continuous(expand = expansion(mult = c(0, 0.002)), 
-                     breaks = seq(0, 70, by = 20),  
+                     breaks = seq(5, 70, by = 5),  
                      labels = scales::dollar_format(),  
                      limits = c(0, 70)
   ) + 
@@ -229,7 +229,8 @@ mutate(geo = factor(geo, levels = c("Anacostia", "eotr", "dc"))) %>%
 rent_inflation_plot 
 # COMMENT idea here could be that we include highest and lowest rental numbers across the ten year period on the graph
   
-
+ana_OFFICE_trends_sales_plot <- office_trends_sales %>% 
+  filter(geo=="Anacostia")
 
 # SALES INFLATION PLOT
 sales_inflation_plot_gg <- office_trends_sales %>%
@@ -241,12 +242,16 @@ sales_inflation_plot_gg <- office_trends_sales %>%
     color = geo
   )) +
   geom_line(linewidth = 1 #slightly thicker line
-  ) + 
+            ) + 
+  # Commenting out and creating new trend line graph below
+  geom_point(data = ana_OFFICE_trends_sales_plot
+             ) +
   # geom_smooth(method = lm, 
   #             se = FALSE, 
   #             linewidth = .8,
   #             linetype="dashed"
   #             ) +
+ 
   scale_x_date(expand = expansion(mult = c(0.02, 0.02)), 
                date_breaks = "1 year",
                date_labels = "%Y"
@@ -258,22 +263,22 @@ sales_inflation_plot_gg <- office_trends_sales %>%
   ) + 
   scale_color_discrete(
     name="Geography", 
-    labels = c("Anacostia", "East of the River", "Washington, DC")
+    labels = c("Anacostia", 
+               "East of the River", 
+               "Washington, DC")
   ) + 
   #COMMENT - I'm getting some weirdness here and I saw this online too; 
   #           the y-axis changes I am making are not showing up in the plot for some reason; 
   #           the code still runs, just no changes in the plot itself even after I clear it out
-  #Peter reply: 
+  #Peter reply: it seems to look fine for me after I added set_urbn_defaults(style = "print") (at top)
+  # but its possible you are referring to something else I'm not seeing?
   labs(title = "Trends in Sales Prices",
        subtitle = "(per square foot, adjusted for inflation)",
        x = "",
        y = "Sales Prices (per square foot, adjusted for inflation)",
        color = "",
        caption = "Source: CoStar. ADD HERE Inflation adjustment info"
-  ) +
-  theme(panel.grid.major.y = element_line(),
-        panel.grid.minor.y = element_line()
-  ) 
+  )
 
 sales_inflation_plot_gg
   
