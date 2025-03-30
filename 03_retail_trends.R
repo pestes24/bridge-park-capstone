@@ -224,6 +224,10 @@ sales_inflation_plot <- retail_trends_sales %>%
                      breaks = seq(0, 3500, by = 500),  
                      labels = scales::dollar_format(),  
                      limits = c(0, 3500)
+  ) + 
+  scale_color_discrete(
+    name="Geography", 
+    labels = c("Anacostia", "East of the River", "Washington, DC")
   ) +
   labs(title = "Trends in Sales Prices",
        x = "",
@@ -259,6 +263,10 @@ sales_inflation_plot_trendline <- retail_trends_sales %>%
                      breaks = seq(0, 1000, by = 250),  
                      labels = scales::dollar_format(),  
                      limits = c(0, 1050)
+  ) + 
+  scale_color_discrete(
+    name="Geography", 
+    labels = c("Anacostia", "East of the River", "Washington, DC")
   ) +
   labs(title = "Trends in Sales Prices",
        subtitle = "(per square foot, adjusted for inflation)",
