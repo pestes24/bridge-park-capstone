@@ -188,7 +188,11 @@ rent_inflation_plot <- retail_trends_rent %>%
                      breaks = seq(0, 60, by = 5),  
                      labels = scales::dollar_format(),  
                      limits = c(0, 60)
-                     ) +
+                     ) + 
+  scale_color_discrete(
+    name="Geography", 
+    labels = c("Anacostia", "East of the River", "Washington, DC")
+  ) +
   labs(title = "Trends in Retail Rents",
        subtitle = "(per square foot, adjusted for inflation)",
        x = "",
