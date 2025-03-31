@@ -12,6 +12,7 @@ library(ggplot2)
 library(sf)
 library(leaflet)
 library(leaflet.extras)
+library(osmdata)
 
 library(mapview)
 library(htmltools)
@@ -78,6 +79,8 @@ tracts <- read_sf(file.path(peter_path, "Census_Tracts_in_2020/Census_Tracts_in_
 
 tracts_study_area <- tracts %>% 
   filter(tract %in% c("007401","007406","007407","007503","007504","007601","007605"))
+
+
 
 #Reading in Business Addresses
 #used Small Business Checklist & Geocodio
@@ -187,6 +190,14 @@ pal_values <- colorFactor(
   
   
 
+
+
+
+
+
+
+
+
 #Creating Labels for Interactive Maps ------------------------------------------
 tracts_study_area$popup_label <- paste("Tract: ", tracts_study_area$tract, "<br>",
                                 "Population: ", comma(tracts_study_area$p0010001),"<br>",
@@ -216,6 +227,29 @@ small_biz_owner$popup_label <- paste("<b>",small_biz_owner$name,"</b>", "<br>",
   lapply(HTML)
 
 
+
+# Icons for business types 
+
+# icons <- awesomeIconList(
+#   "Barber Shop / Hair Salon" = makeIcon(
+#     iconUrl = "C:/Users/peter/Downloads/favicon.ico",
+#     iconWidth = 25,
+#     iconHeight = 25)
+#   )
+
+#   "General Sales / Services"
+#   "Regulated Business"
+#   "Nonprofit"
+# )
+
+#Relevant Readings: 
+# https://roh.engineering/posts/2021/10/awesome-marker-legends-in-leaflet/
+# https://rstudio.github.io/leaflet/reference/awesomeIcons.html 
+# https://github.com/lennardv2/Leaflet.awesome-markers
+# https://github.com/pointhi/leaflet-color-markers
+# https://www.jla-data.net/eng/leaflet-markers-in-r/
+
+
 # Maps! -----------------------------------------------------------------------
 
 #Series of maps showing the neighborhood and various components we will be referencing. 
@@ -240,6 +274,8 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
     #label = shp_data$popup_label,
     #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
     ) %>%
+  addMarkers(icon = ~ icons[ticker], # lookup based on ticker
+             label = ~ address) %>%
   addCircleMarkers(
     data = small_biz_owner,
     ~longitude, ~latitude, 
@@ -282,9 +318,32 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
   addControl(
     html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source note
     position = "bottomright"
-  )
+  ) %>% 
+  htmlwidgets::onRender("
+    function(el, x) {
+      var style = document.createElement('style');
+      style.innerHTML = `
+        .leaflet-container {
+          font-family: 'Lato', sans-serif !important;
+        }
+        .leaflet-control {
+          font-family: 'Lato', sans-serif !important;
+        }
+        .leaflet-legend {
+          font-family: 'Lato', sans-serif !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  ")
 
 map_sbs_buffer
+
+
+
+
+
+
 
 # Map showing businesses with a recent sale ----------------------------------
 map_sbs_sales <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
@@ -349,7 +408,24 @@ addCircleMarkers(
 addControl(
   html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source note
   position = "bottomright"
-)
+  ) %>% 
+  htmlwidgets::onRender("
+    function(el, x) {
+      var style = document.createElement('style');
+      style.innerHTML = `
+        .leaflet-container {
+          font-family: 'Lato', sans-serif !important;
+        }
+        .leaflet-control {
+          font-family: 'Lato', sans-serif !important;
+        }
+        .leaflet-legend {
+          font-family: 'Lato', sans-serif !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  ")
 
 map_sbs_sales
 
@@ -362,6 +438,35 @@ map_sbs_sales
 map_anacostia_ref <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
   addTiles() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(
+    data = ward_WOTR,
+    fillColor = NULL,
+    color = "#273538",
+    highlightOptions = highlightOptions(color = "white", weight = 1,
+                                        bringToFront = FALSE),
+    opacity = 1,
+    weight = .15,
+    fillOpacity =.75,
+    #group ="Count of FBO Owned Properties - Zip Code",
+    #smoothFactor = 0.2,
+    #label = shp_data$popup_label,
+    #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+  ) %>% 
+  addPolygons(
+    data = ward_EOTR,
+    fillColor = NULL,
+    color = "#273538",
+    highlightOptions = highlightOptions(color = "white", 
+                                        weight = 1,
+                                        bringToFront = FALSE),
+    opacity = 1,
+    weight = 1.2,
+    fillOpacity =.25,
+    #group ="Count of FBO Owned Properties - Zip Code",
+    #smoothFactor = 0.2,
+    #label = shp_data$popup_label,
+    #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+  ) %>% 
   addPolygons(
     data = tracts_study_area, 
     fillColor = NULL, #~pal_pop(population_group),
@@ -384,35 +489,23 @@ map_anacostia_ref <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
   #   group = "Population - Urban Areas",
   #   opacity = 1) 
   #%>% 
-  addPolygons(
-    data = ward_WOTR,
-    fillColor = NULL,
-    color = "#273538",
-    highlightOptions = highlightOptions(color = "white", weight = 1,
-                                      bringToFront = FALSE),
-    opacity = 1,
-    weight = .15,
-    fillOpacity =.75,
-  #group ="Count of FBO Owned Properties - Zip Code",
-  #smoothFactor = 0.2,
-  #label = shp_data$popup_label,
-  #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
-  ) %>% 
-  addPolygons(
-    data = ward_EOTR,
-    fillColor = NULL,
-    color = "#273538",
-    highlightOptions = highlightOptions(color = "white", 
-                                        weight = 1,
-                                        bringToFront = FALSE),
-    opacity = 1,
-    weight = 1.2,
-    fillOpacity =.25,
-    #group ="Count of FBO Owned Properties - Zip Code",
-    #smoothFactor = 0.2,
-    #label = shp_data$popup_label,
-    #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
-  )
+  htmlwidgets::onRender("
+    function(el, x) {
+      var style = document.createElement('style');
+      style.innerHTML = `
+        .leaflet-container {
+          font-family: 'Lato', sans-serif !important;
+        }
+        .leaflet-control {
+          font-family: 'Lato', sans-serif !important;
+        }
+        .leaflet-legend {
+          font-family: 'Lato', sans-serif !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  ")
 
 map_anacostia_ref
 
@@ -482,7 +575,24 @@ map_sbs_prop_values <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>
   addControl(
     html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source note
     position = "bottomright"
-    )
+    ) %>% 
+  htmlwidgets::onRender("
+    function(el, x) {
+      var style = document.createElement('style');
+      style.innerHTML = `
+        .leaflet-container {
+          font-family: 'Lato', sans-serif !important;
+        }
+        .leaflet-control {
+          font-family: 'Lato', sans-serif !important;
+        }
+        .leaflet-legend {
+          font-family: 'Lato', sans-serif !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  ")
 
 map_sbs_prop_values
 
