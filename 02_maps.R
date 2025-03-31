@@ -230,6 +230,7 @@ small_biz_owner$popup_label <- paste("<b>",small_biz_owner$name,"</b>", "<br>",
 
 # Icons for business types 
 
+#one method
 # icons <- awesomeIconList(
 #   "Barber Shop / Hair Salon" = makeIcon(
 #     iconUrl = "C:/Users/peter/Downloads/favicon.ico",
@@ -242,6 +243,7 @@ small_biz_owner$popup_label <- paste("<b>",small_biz_owner$name,"</b>", "<br>",
 #   "Nonprofit"
 # )
 
+#but should be better to just pull from existing icon list
 #Relevant Readings: 
 # https://roh.engineering/posts/2021/10/awesome-marker-legends-in-leaflet/
 # https://rstudio.github.io/leaflet/reference/awesomeIcons.html 
