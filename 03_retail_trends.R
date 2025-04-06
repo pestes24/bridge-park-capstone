@@ -211,10 +211,10 @@ rent_inflation_plot <- retail_trends_rent %>%
     name="Geography", 
     labels = c("Anacostia", "East of the River", "Washington, DC")
   ) +
-  labs(title = "Trends in Retail Rents",
+  labs(title = "Figure XX: Trends in Asking Rents, Retail Properties",
        subtitle = "(per square foot, adjusted for inflation)",
        x = "",
-       y = "Market Asking Rent ",
+       y = "Market Asking Rent (per square foot)",
        color = ""
        ) +
   remove_ticks()
@@ -252,7 +252,8 @@ sales_inflation_plot <- retail_trends_sales %>%
     name="Geography", 
     labels = c("Anacostia", "East of the River", "Washington, DC")
   ) +
-  labs(title = "Trends in Sales Prices",
+  labs(title = "Figure XX: Trends in Sales Prices, Retail Properties",
+       subtitle = "(per square foot, adjusted for inflation)",
        x = "",
        y = "Sales Prices (per square foot, adjusted for inflation)",
        color = "",
@@ -290,7 +291,7 @@ sales_inflation_plot_trendline <- retail_trends_sales %>%
     name="Geography", 
     labels = c("Anacostia", "East of the River", "Washington, DC")
   ) +
-  labs(title = "Trends in Sales Prices",
+  labs(title = "Figure XX: Trends in Sales Prices, Retail Properties",
        subtitle = "(per square foot, adjusted for inflation)",
        x = "",
        y = "Sales Prices (per square foot)",
