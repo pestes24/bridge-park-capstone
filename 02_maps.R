@@ -13,6 +13,7 @@ library(sf)
 library(leaflet)
 library(leaflet.extras)
 library(osmdata)
+library(tigris)
 
 library(mapview)
 library(htmltools)
@@ -20,6 +21,11 @@ library(htmlwidgets)
 library(viridisLite)
 library(devtools)
 library(forcats)
+library(urbnthemes)
+library(gapminder)
+library(zoo)
+
+set_urbn_defaults(style = "print")
 
 #library(webshot2) # might need to get this to work to do exporting, check later
 #install_github("wch/webshot")
@@ -51,6 +57,15 @@ bp_buffer <- read_sf(file.path(peter_path, "BridgeParkBuffer.shp")) %>%
   st_transform(crs = 4326) %>%
   clean_names()
 
+wards <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp")) %>% 
+  st_as_sf() %>%
+  st_transform(crs = 4326) %>%
+  clean_names() #%>% 
+  # select(
+  #   ward,
+  #   geometry
+  #   )
+
 ward_WOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp")) %>% 
   st_as_sf() %>%
   st_transform(crs = 4326) %>%
@@ -71,6 +86,9 @@ ward_EOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp
   ) %>% 
   filter(ward %in% c(7, 8))
 
+#if needed, EOTR shapefile: https://opendata.dc.gov/datasets/DCGIS::east-of-the-river-1/explore
+
+
 #tracts file and data dictionary here: https://opendata.dc.gov/datasets/DCGIS::census-tracts-in-2020/about 
 tracts <- read_sf(file.path(peter_path, "Census_Tracts_in_2020/Census_Tracts_in_2020.shp"))%>% 
   st_as_sf() %>%
@@ -80,6 +98,15 @@ tracts <- read_sf(file.path(peter_path, "Census_Tracts_in_2020/Census_Tracts_in_
 tracts_study_area <- tracts %>% 
   filter(tract %in% c("007401","007406","007407","007503","007504","007601","007605"))
 
+dc <- read_sf(file.path(peter_path, "/lehd_shp_gs.shp")) %>%
+  clean_names() %>% 
+  filter(stusps == "DC")
+
+rivers <- read_sf(file.path(peter_path, "/Waterbodies_2021/Waterbodies_2021.shp")) %>% 
+  st_as_sf() %>%
+  st_transform(crs = 4326)  %>%
+  clean_names() %>% 
+  filter(descriptio == "River")
 
 
 #Reading in Business Addresses
@@ -191,10 +218,49 @@ pal_values <- colorFactor(
   
 
 
+# BASIC REFERENCE MAPS ---------------------------------------------------------
+
+anacostia_marker <- st_as_sf(
+  data.frame(
+    lon = -76.9884,
+    lat = 38.8670), 
+  coords = c("lon", "lat"),
+  crs = 4326)
 
 
+reference_map <- dc %>% 
+  ggplot() + 
+  geom_sf(fill = "lightgray", 
+          color = "black"
+          ) +
+  geom_sf(data = rivers,
+          fill = "lightblue",
+          color = "darkgray",
+          stroke = 1
+  ) +
+  geom_sf(data = bp_buffer,
+          fill = NA,
+          size = 55,
+          color = "lightgreen")+
+  geom_sf_text(data = anacostia_marker, 
+               label = "\u2605", 
+               size = 10, 
+               color = "gold") +
+  # geom_sf(data = anacostia_marker, 
+  #         color = "green", 
+  #         shape = 8,
+  #         size = 3
+  # ) +
+  theme_minimal() +
+  labs(title = "Anacostia in Context",
+       caption = "Source: DC Open Data",
+       x = "",
+       y = "",
+       ) +
+  remove_ticks()
 
 
+reference_map
 
 
 
