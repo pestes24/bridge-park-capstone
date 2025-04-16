@@ -8,7 +8,6 @@ library(stringr)
 library(scales)
 library(RColorBrewer)
 
-library(ggplot2)
 library(sf)
 library(leaflet)
 library(leaflet.extras)
@@ -21,6 +20,7 @@ library(htmlwidgets)
 library(viridisLite)
 library(devtools)
 library(forcats)
+library(ggplot2)
 library(urbnthemes)
 library(gapminder)
 library(zoo)
@@ -46,25 +46,26 @@ peter_export <- "C:/Users/peter/Documents/NYU/Bridge_Park_Capstone"
 #   #st_filter(nys_boundary) %>% 
 #   #st_intersection(nys_shoreline)
 
+#DC Geos
+dc <- read_sf(file.path(peter_path, "/lehd_shp_gs.shp")) %>%
+  clean_names() %>% 
+  filter(stusps == "DC")
 
-bridge_park <- read_sf(file.path(peter_path,"Bridge Park.shp")) %>% 
+rivers <- read_sf(file.path(peter_path, "/Waterbodies_2021/Waterbodies_2021.shp")) %>% 
   st_as_sf() %>%
-  st_transform(crs = 4326) %>%
-  clean_names()
+  st_transform(crs = 4326)  %>%
+  clean_names() %>% 
+  filter(descriptio == "River")
 
-bp_buffer <- read_sf(file.path(peter_path, "BridgeParkBuffer.shp")) %>% 
-  st_as_sf() %>%
-  st_transform(crs = 4326) %>%
-  clean_names()
 
 wards <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp")) %>% 
   st_as_sf() %>%
   st_transform(crs = 4326) %>%
   clean_names() #%>% 
-  # select(
-  #   ward,
-  #   geometry
-  #   )
+# select(
+#   ward,
+#   geometry
+#   )
 
 ward_WOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp")) %>% 
   st_as_sf() %>%
@@ -73,7 +74,7 @@ ward_WOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp
   select(
     ward,
     geometry
-    ) %>% 
+  ) %>% 
   filter(!(ward %in% c(7, 8)))
 
 ward_EOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp")) %>% 
@@ -84,9 +85,12 @@ ward_EOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp
     ward,
     geometry
   ) %>% 
-  filter(ward %in% c(7, 8))
+  filter(ward %in% c(7, 8)) %>% 
+  st_difference(rivers) # this isn't working here or below
+  #Error in wk_handle.wk_wkb(wkb, s2_geography_writer(oriented = oriented,  : 
+  #Loop 0 is not valid: Edge 51113 has duplicate vertex with edge 51121
 
-#if needed, EOTR shapefile: https://opendata.dc.gov/datasets/DCGIS::east-of-the-river-1/explore
+
 
 
 #tracts file and data dictionary here: https://opendata.dc.gov/datasets/DCGIS::census-tracts-in-2020/about 
@@ -98,15 +102,27 @@ tracts <- read_sf(file.path(peter_path, "Census_Tracts_in_2020/Census_Tracts_in_
 tracts_study_area <- tracts %>% 
   filter(tract %in% c("007401","007406","007407","007503","007504","007601","007605"))
 
-dc <- read_sf(file.path(peter_path, "/lehd_shp_gs.shp")) %>%
-  clean_names() %>% 
-  filter(stusps == "DC")
 
-rivers <- read_sf(file.path(peter_path, "/Waterbodies_2021/Waterbodies_2021.shp")) %>% 
+# BP and Study Area
+bridge_park <- read_sf(file.path(peter_path,"Bridge Park.shp")) %>% 
   st_as_sf() %>%
-  st_transform(crs = 4326)  %>%
-  clean_names() %>% 
-  filter(descriptio == "River")
+  st_transform(crs = 4326) %>%
+  clean_names()
+
+bp_buffer <- read_sf(file.path(peter_path, "BridgeParkBuffer.shp")) %>% 
+  st_as_sf() %>%
+  st_transform(crs = 4326) %>%
+  clean_names()
+
+bp_buffer_eotr <- st_intersection(bp_buffer, rivers) %>% 
+  st_difference(wards_)
+
+
+#if needed, EOTR shapefile: https://opendata.dc.gov/datasets/DCGIS::east-of-the-river-1/explore
+
+
+
+
 
 
 #Reading in Business Addresses
@@ -237,9 +253,9 @@ reference_map <- dc %>%
           fill = "lightblue",
           color = "darkgray",
           stroke = 1
-  ) +
-  geom_sf(data = bp_buffer,
-          fill = NA,
+          ) +
+  geom_sf(data = bp_buffer_eotr,
+          fill = "lightgreen",
           size = 55,
           color = "lightgreen")+
   geom_sf_text(data = anacostia_marker, 
@@ -251,17 +267,17 @@ reference_map <- dc %>%
   #         shape = 8,
   #         size = 3
   # ) +
-  theme_minimal() +
-  labs(title = "Anacostia in Context",
+  theme_void(
+  ) +
+  labs(title = "The Study Area in Context",
        caption = "Source: DC Open Data",
        x = "",
        y = "",
-       ) +
-  remove_ticks()
+       )# +
+  #remove_ticks()
 
 
 reference_map
-
 
 
 #Creating Labels for Interactive Maps ------------------------------------------
