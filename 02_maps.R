@@ -353,13 +353,14 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
     opacity = .7,
     weight = 1.2,
     fillOpacity = 0,
+    options = pathOptions()
     #group ="Count of FBO Owned Properties - Zip Code",
     #smoothFactor = 0.2,
     #label = shp_data$popup_label,
     #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
     ) %>%
-  addMarkers(icon = ~ icons[ticker], # lookup based on ticker
-             label = ~ address) %>%
+  # addMarkers(icon = ~ icons[ticker], # lookup based on ticker
+  #            label = ~ address) %>%
   addCircleMarkers(
     data = small_biz_owner,
     ~longitude, ~latitude, 
@@ -374,7 +375,7 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
   addLegend(
     pal = pal_biz,
     values = small_biz_owner$type_dc_categories,
-    position = "topleft",
+    position = "bottomright", #"topleft",
     title = "Businesses <1 mile from the Bridge Park",
     #group = "Count of FBO Owned Properties - Zip Code",
     # labFormat = function(type, cuts, p) {
@@ -386,23 +387,35 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
     # },
     #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
     opacity = 1) %>%
-  # addPolygons(
-  #   data = bridge_park,
-  #   fillColor = "#FFFF00",
-  #   color = "#273538",
-  #   highlightOptions = highlightOptions(color = "white", weight = 1,
-  #                                       bringToFront = TRUE),
-  #   opacity = .7,
-  #   weight = 1,
-  #   fillOpacity = 0,
-  #   #group ="Count of FBO Owned Properties - Zip Code",
+  addPolygons(
+    data = sf::st_zm(bridge_park), #
+    fillColor = "darkgreen",
+    color = "darkgreen",
+    highlightOptions = highlightOptions(
+      color = "white",
+      weight = 1,
+      bringToFront = TRUE
+      ),
+    opacity = .7,
+    weight = 3,
+    label = "Future Site of the Bridge Park",  # Static label
+    labelOptions = labelOptions(
+      noHide = TRUE,  # Keeps the label visible at all times
+      direction = "left",  # Position the label above the polygon
+      offset = c(0, 15)  # Adjust the label's position a bit upwards
+    )
+    # fillOpacity = 0,
+    # options = pathOptions()
+    ) %>%
+  # Notes,could add above^
+  #   #group = "Count of FBO Owned Properties - Zip Code",
   #   #smoothFactor = 0.2,
   #   #label = shp_data$popup_label,
-  #   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
-  addControl(
-    html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source note
-    position = "bottomright"
-  ) %>% 
+  #   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20)
+  # addControl( #commenting out temporarily 
+  #   html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source not
+  #   position = "bottomright"
+  #   ) %>% 
   htmlwidgets::onRender("
     function(el, x) {
       var style = document.createElement('style');
@@ -418,12 +431,24 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
         }
       `;
       document.head.appendChild(style);
-    }
-  ")
+      // Access the Leaflet layers (assuming your GeoJSON or SF layer is added here)
+    var map = el; // Assuming 'el' is your map
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.GeoJSON) {
+        // Modify the stroke thickness of each GeoJSON layer (or replace with your specific layer type)
+        layer.setStyle({
+          weight: 3, // This controls the line thickness
+          color: 'black', // Border color
+          opacity: 1,
+          fillColor: 'yellow', // Example fill color for polygons or markers
+          fillOpacity: 0.6
+        });
+      }
+    });
+  }
+")
 
 map_sbs_buffer
-
-
 
 
 
