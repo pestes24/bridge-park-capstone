@@ -156,6 +156,7 @@ small_biz_geo <- small_biz %>%
   )
 
 #Dataset of small businesses with business types, transactions, tax, and ownership data
+#Business types from: https://dlcp.dc.gov/service/business-licensing-division 
 small_biz_owner <- read.csv(file.path(peter_path, "small_businesses_ownership.csv")) %>% 
   clean_names() %>% 
   left_join(small_biz_geo) %>% 
@@ -172,7 +173,7 @@ small_biz_owner <- read.csv(file.path(peter_path, "small_businesses_ownership.cs
     type_dc_categories = case_when(
       str_starts(type_dc_categories, "Beauty") ~ "Barber Shop / Hair Salon",
       str_starts(type_dc_categories, "General") ~ "General Sales / Services",
-      str_starts(type_dc_categories, "Reg") ~ "Regulated Business",
+      str_starts(type_dc_categories, "Reg") ~ "Other Regulated Business", #see list in link above; includes spas, gyms, auto repair, funerals, smoke shops, etc. 
       str_starts(type_dc_categories, "Not") ~ "Nonprofit",
       TRUE ~ as.character(type_dc_categories)
     ),
@@ -201,6 +202,9 @@ small_biz_owner <- read.csv(file.path(peter_path, "small_businesses_ownership.cs
                             levels = c("$0-$1M", "$1M-$2.5M", "$2.5M-$5M", "$5M-$10M", "$10M+", "No Value in OTR Database")),
   )
 
+biz_counts <- small_biz_owner %>%
+  count(type_dc_categories) %>%
+  arrange(desc(n))
 
 # create palettes -------------------------------------------------------------
 pal_biz <- colorFactor(
@@ -341,10 +345,12 @@ small_biz_owner$popup_label <- paste("<b>",small_biz_owner$name,"</b>", "<br>",
 #Reverence for long-term residents' understanding of places names.
 
 #Map showing businesses within BP 1 mile walkshed -------------------------------- 
-map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = TRUE,
-                                                   minZoom = 13,
-                                                   maxZoom = 16)) %>% 
-  setView(lng = 38.86713, lat = -76.98892, zoom = 14) %>% 
+map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE#,
+                                                   # minZoom = 13,
+                                                   # maxZoom = 16
+                                                   )
+                                                   ) %>% 
+  setView(lng = -76.98892, lat = 38.86713, zoom = 15.25) %>% 
   addTiles() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
   addPolygons(
@@ -458,6 +464,7 @@ map_sbs_buffer
 
 
 
+
 # Map showing businesses with a recent sale ----------------------------------
 map_sbs_sales <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
   addTiles() %>% 
@@ -565,21 +572,21 @@ map_anacostia_ref <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
     #label = shp_data$popup_label,
     #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
   ) %>% 
-  addPolygons(
-    data = ward_EOTR,
-    fillColor = NULL,
-    color = "#273538",
-    highlightOptions = highlightOptions(color = "white", 
-                                        weight = 1,
-                                        bringToFront = FALSE),
-    opacity = 1,
-    weight = 1.2,
-    fillOpacity =.25,
-    #group ="Count of FBO Owned Properties - Zip Code",
-    #smoothFactor = 0.2,
-    #label = shp_data$popup_label,
-    #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
-  ) %>% 
+  # addPolygons(
+  #   data = ward_EOTR,
+  #   fillColor = NULL,
+  #   color = "#273538",
+  #   highlightOptions = highlightOptions(color = "white", 
+  #                                       weight = 1,
+  #                                       bringToFront = FALSE),
+  #   opacity = 1,
+  #   weight = 1.2,
+  #   fillOpacity =.25,
+  #   #group ="Count of FBO Owned Properties - Zip Code",
+  #   #smoothFactor = 0.2,
+  #   #label = shp_data$popup_label,
+  #   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+  # ) %>% 
   addPolygons(
     data = tracts_study_area, 
     fillColor = NULL, #~pal_pop(population_group),
