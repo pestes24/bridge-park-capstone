@@ -2,6 +2,7 @@ library(dplyr)
 library(tidyverse)
 library(tidyr)
 library(janitor)
+library(gt)
 
 library(lubridate)
 library(stringr)
@@ -200,16 +201,31 @@ small_biz_owner <- read.csv(file.path(peter_path, "small_businesses_ownership.cs
     ),
     value_category = factor(value_category,
                             levels = c("$0-$1M", "$1M-$2.5M", "$2.5M-$5M", "$5M-$10M", "$10M+", "No Value in OTR Database")),
-  )
+  ) %>%
+  mutate(type_detail = case_when(
+    grepl("Busboys|Savages", name, ignore.case = TRUE) ~ "Restaurant (Sit-Down)",
+    grepl("Grounded", name, ignore.case = TRUE) ~ "Café",
+    type_dc_categories == "Food Services" ~ "Takeout Food or Convenience Store",
+    TRUE ~ type_dc_categories
+  ))
 
-biz_counts <- small_biz_owner %>%
-  count(type_dc_categories) %>%
+small_biz_food <- small_biz_owner %>% 
+  filter(type_dc_categories == "Food Services") 
+
+food_type_counts <- small_biz_food %>%
+  count(type_detail) %>%
   arrange(desc(n))
+
+
 
 # create palettes -------------------------------------------------------------
 pal_biz <- colorFactor(
   palette = "viridis",
   domain = small_biz_owner$type_dc_categories)
+
+pal_biz_detail <- colorFactor(
+  palette = "viridis",
+  domain = food_type_counts$type_detail)
 
 sale_colors <- c(
   "$0-$1M", "$1M-$2.5M", "$2.5M-$5M", "$5M-$10M", "$10M+"
@@ -344,7 +360,7 @@ small_biz_owner$popup_label <- paste("<b>",small_biz_owner$name,"</b>", "<br>",
 #Call outs with specific reference to names of areas of neighborhood - historical names and newer names. 
 #Reverence for long-term residents' understanding of places names.
 
-#Map showing businesses within BP 1 mile walkshed -------------------------------- 
+#Map showing businesses within BP 1 mile walkshed ------ ORIGINAL---------- 
 map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE#,
                                                    # minZoom = 13,
                                                    # maxZoom = 16
@@ -386,7 +402,7 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE#,
     pal = pal_biz,
     values = small_biz_owner$type_dc_categories,
     position = "bottomright", #"topleft",
-    title = "Businesses <1 mile from the Bridge Park",
+    #title = "Businesses <1 mile from the Bridge Park",
     #group = "Count of FBO Owned Properties - Zip Code",
     # labFormat = function(type, cuts, p) {
     #   # Define custom bin labels in order
@@ -460,7 +476,121 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE#,
 
 map_sbs_buffer
 
+#Map showing businesses within BP 1 mile walkshed ------ DETAILED BIZ ---------- 
+map_sbs_buffer_detail <- leaflet(options = leafletOptions(zoomControl = FALSE#,
+                                                   # minZoom = 13,
+                                                   # maxZoom = 16
+)
+) %>% 
+  setView(lng = -76.98892, lat = 38.86713, zoom = 15.25) %>% 
+  addTiles() %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addPolygons(
+    data = bp_buffer,
+    fillColor = NULL,
+    color = "#27ae60",
+    highlightOptions = highlightOptions(color = "white", 
+                                        weight = 1,
+                                        bringToFront = FALSE),
+    opacity = .7,
+    weight = 1.2,
+    fillOpacity = 0,
+    options = pathOptions()
+    #group ="Count of FBO Owned Properties - Zip Code",
+    #smoothFactor = 0.2,
+    #label = shp_data$popup_label,
+    #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+  ) %>%
+  # addMarkers(icon = ~ icons[ticker], # lookup based on ticker
+  #            label = ~ address) %>%
+  addCircleMarkers(
+    data = small_biz_owner,
+    ~longitude, ~latitude, 
+    #popup = ~as.character(name), 
+    label = small_biz_owner$popup_label,
+    color = ~pal_biz_detail(type_detail), #"#aed6f1", # could make custom markers for businesses by type
+    radius = 3,
+    stroke = FALSE, 
+    fillOpacity = 1,
+    clusterOptions = markerClusterOptions(freezeAtZoom = 21)
+  ) %>% 
+  addLegend(
+    pal = pal_biz,
+    values = small_biz_food$type_detail,
+    position = "bottomright", #"topleft",
+    #title = "Businesses <1 mile from the Bridge Park",
+    #group = "Count of FBO Owned Properties - Zip Code",
+    # labFormat = function(type, cuts, p) {
+    #   # Define custom bin labels in order
+    #   custom_labels <- c("0", "1-5", "6-9", "10-13", "14-17", "18-300")
+    #
+    #   # Return labels for each cut
+    #   return(custom_labels)
+    # },
+    #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
+    opacity = 1) %>%
+  addPolygons(
+    data = sf::st_zm(bridge_park), #
+    fillColor = "darkgreen",
+    color = "darkgreen",
+    highlightOptions = highlightOptions(
+      color = "white",
+      weight = 1,
+      bringToFront = TRUE
+    ),
+    opacity = .7,
+    weight = 3,
+    label = "Future Site of the Bridge Park",  # Static label
+    labelOptions = labelOptions(
+      noHide = TRUE,  # Keeps the label visible at all times
+      direction = "left",  # Position the label above the polygon
+      offset = c(0, 15)  # Adjust the label's position a bit upwards
+    )
+    # fillOpacity = 0,
+    # options = pathOptions()
+  ) %>%
+  # Notes,could add above^
+  #   #group = "Count of FBO Owned Properties - Zip Code",
+  #   #smoothFactor = 0.2,
+  #   #label = shp_data$popup_label,
+  #   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20)
+  # addControl( #commenting out temporarily 
+  #   html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source not
+  #   position = "bottomright"
+  #   ) %>% 
+  htmlwidgets::onRender("
+    function(el, x) {
+      var style = document.createElement('style');
+      style.innerHTML = `
+        .leaflet-container {
+          font-family: 'Lato', sans-serif !important;
+        }
+        .leaflet-control {
+          font-family: 'Lato', sans-serif !important;
+        }
+        .leaflet-legend {
+          font-family: 'Lato', sans-serif !important;
+        }
+      `;
+      document.head.appendChild(style);
+      // Access the Leaflet layers (assuming your GeoJSON or SF layer is added here)
+    var map = el; // Assuming 'el' is your map
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.GeoJSON) {
+        // Modify the stroke thickness of each GeoJSON layer (or replace with your specific layer type)
+        layer.setStyle({
+          weight: 3, // This controls the line thickness
+          color: 'black', // Border color
+          opacity: 1,
+          fillColor: 'yellow', // Example fill color for polygons or markers
+          fillOpacity: 0.6
+        });
+      }
+    });
+  }
+")
 
+map_sbs_buffer_detail
 
 
 
