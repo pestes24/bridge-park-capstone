@@ -77,16 +77,16 @@ ward_WOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp
   ) %>% 
   filter(!(ward %in% c(7, 8)))
 
-ward_EOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp")) %>% 
-  st_as_sf() %>%
-  st_transform(crs = 4326) %>%
-  clean_names() %>% 
-  select(
-    ward,
-    geometry
-  ) %>% 
-  filter(ward %in% c(7, 8)) %>% 
-  st_difference(rivers) # this isn't working here or below
+# ward_EOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp")) %>% 
+#   st_as_sf() %>%
+#   st_transform(crs = 4326) %>%
+#   clean_names() %>% 
+#   select(
+#     ward,
+#     geometry
+#   ) %>% 
+#   filter(ward %in% c(7, 8)) %>% 
+#   st_difference(rivers) # this isn't working here or below
   #Error in wk_handle.wk_wkb(wkb, s2_geography_writer(oriented = oriented,  : 
   #Loop 0 is not valid: Edge 51113 has duplicate vertex with edge 51121
 
@@ -114,8 +114,8 @@ bp_buffer <- read_sf(file.path(peter_path, "BridgeParkBuffer.shp")) %>%
   st_transform(crs = 4326) %>%
   clean_names()
 
-bp_buffer_eotr <- st_intersection(bp_buffer, rivers) %>% 
-  st_difference(wards_)
+# bp_buffer_eotr <- st_intersection(bp_buffer, rivers) %>% 
+#   st_difference(wards_EOTR)
 
 
 #if needed, EOTR shapefile: https://opendata.dc.gov/datasets/DCGIS::east-of-the-river-1/explore
@@ -244,40 +244,40 @@ anacostia_marker <- st_as_sf(
   crs = 4326)
 
 
-reference_map <- dc %>% 
-  ggplot() + 
-  geom_sf(fill = "lightgray", 
-          color = "black"
-          ) +
-  geom_sf(data = rivers,
-          fill = "lightblue",
-          color = "darkgray",
-          stroke = 1
-          ) +
-  geom_sf(data = bp_buffer_eotr,
-          fill = "lightgreen",
-          size = 55,
-          color = "lightgreen")+
-  geom_sf_text(data = anacostia_marker, 
-               label = "\u2605", 
-               size = 10, 
-               color = "gold") +
-  # geom_sf(data = anacostia_marker, 
-  #         color = "green", 
-  #         shape = 8,
-  #         size = 3
-  # ) +
-  theme_void(
-  ) +
-  labs(title = "The Study Area in Context",
-       caption = "Source: DC Open Data",
-       x = "",
-       y = "",
-       )# +
-  #remove_ticks()
-
-
-reference_map
+# reference_map <- dc %>% 
+#   ggplot() + 
+#   geom_sf(fill = "lightgray", 
+#           color = "black"
+#           ) +
+#   geom_sf(data = rivers,
+#           fill = "lightblue",
+#           color = "darkgray",
+#           stroke = 1
+#           ) +
+#   geom_sf(data = bp_buffer_eotr,
+#           fill = "lightgreen",
+#           size = 55,
+#           color = "lightgreen")+
+#   geom_sf_text(data = anacostia_marker, 
+#                label = "\u2605", 
+#                size = 10, 
+#                color = "gold") +
+#   # geom_sf(data = anacostia_marker, 
+#   #         color = "green", 
+#   #         shape = 8,
+#   #         size = 3
+#   # ) +
+#   theme_void(
+#   ) +
+#   labs(title = "The Study Area in Context",
+#        caption = "Source: DC Open Data",
+#        x = "",
+#        y = "",
+#        )# +
+#   #remove_ticks()
+# 
+# 
+# reference_map
 
 
 #Creating Labels for Interactive Maps ------------------------------------------
@@ -341,14 +341,18 @@ small_biz_owner$popup_label <- paste("<b>",small_biz_owner$name,"</b>", "<br>",
 #Reverence for long-term residents' understanding of places names.
 
 #Map showing businesses within BP 1 mile walkshed -------------------------------- 
-map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
+map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = TRUE,
+                                                   minZoom = 13,
+                                                   maxZoom = 16)) %>% 
+  setView(lng = 38.86713, lat = -76.98892, zoom = 14) %>% 
   addTiles() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
   addPolygons(
     data = bp_buffer,
     fillColor = NULL,
     color = "#27ae60",
-    highlightOptions = highlightOptions(color = "white", weight = 1,
+    highlightOptions = highlightOptions(color = "white", 
+                                        weight = 1,
                                         bringToFront = FALSE),
     opacity = .7,
     weight = 1.2,
