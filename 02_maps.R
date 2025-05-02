@@ -201,21 +201,27 @@ small_biz_owner <- read.csv(file.path(peter_path, "small_businesses_ownership.cs
     ),
     value_category = factor(value_category,
                             levels = c("$0-$1M", "$1M-$2.5M", "$2.5M-$5M", "$5M-$10M", "$10M+", "No Value in OTR Database")),
-  ) %>%
-  mutate(type_detail = case_when(
-    grepl("Busboys|Savages", name, ignore.case = TRUE) ~ "Restaurant (Sit-Down)",
-    grepl("Grounded", name, ignore.case = TRUE) ~ "Café",
-    type_dc_categories == "Food Services" ~ "Takeout Food or Convenience Store",
-    TRUE ~ type_dc_categories
-  ))
+  ) #%>%
+  # mutate(type_detail = case_when(
+  #   grepl("Busboys|Savages", name, ignore.case = TRUE) ~ "Restaurant (Sit-Down)",
+  #   grepl("Grounded", name, ignore.case = TRUE) ~ "Café",
+  #   type_dc_categories == "Food Services" ~ "Takeout Food or Convenience Store",
+  #   TRUE ~ type_dc_categories
+  # ))
 
-small_biz_food <- small_biz_owner %>% 
-  filter(type_dc_categories == "Food Services") 
+# small_biz_food <- small_biz_owner %>% 
+#   filter(type_dc_categories == "Food Services") 
+# 
+# food_type_counts <- small_biz_food %>%
+#   count(type_detail) %>%
+#   arrange(desc(n))
 
-food_type_counts <- small_biz_food %>%
+pal_biz_counts <- colorFactor(palette = "Set2", domain = unique(small_biz_owner$type_detail))
+
+# Create the count labels
+biz_counts <- small_biz_owner %>%
   count(type_detail) %>%
-  arrange(desc(n))
-
+  mutate(label = paste0(type_detail, " (", n, ")"))
 
 
 # create palettes -------------------------------------------------------------
