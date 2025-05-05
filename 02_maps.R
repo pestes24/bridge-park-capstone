@@ -25,11 +25,20 @@ library(ggplot2)
 library(urbnthemes)
 library(gapminder)
 library(zoo)
+library(showtext)
 
 set_urbn_defaults(style = "print")
 
 #library(webshot2) # might need to get this to work to do exporting, check later
 #install_github("wch/webshot")
+
+font_add("montserrat", "C:/Users/peter/Desktop/Fonts/Montserrat/static/Montserrat-Regular.ttf")
+showtext_auto()
+font_add(family = "montserrat",
+         regular = "C:/Users/peter/Desktop/Fonts/Montserrat/static/Montserrat-Regular.ttf",
+         bold = "C:/Users/peter/Desktop/Fonts/Montserrat/static/Montserrat-Bold.ttf",
+         italic = "C:/Users/peter/Desktop/Fonts/Montserrat/static/Montserrat-Italic.ttf")
+
 
 
 #paths - can just Find & Replace when switching 
@@ -368,12 +377,26 @@ small_biz_owner$popup_label <- paste("<b>",small_biz_owner$name,"</b>", "<br>",
 #Call outs with specific reference to names of areas of neighborhood - historical names and newer names. 
 #Reverence for long-term residents' understanding of places names.
 
+
+
+font_header <- tags$head(
+  tags$link(
+    href = "https://fonts.googleapis.com/css2?family=Montserrat&display=swap", 
+    rel = "stylesheet"
+  ),
+  tags$style(HTML("
+    .leaflet-container, 
+    .leaflet-control,
+    .leaflet-tooltip,
+    .leaflet-popup-content {
+      font-family: 'Montserrat', sans-serif !important;
+    }
+  "))
+)
+
 #Map showing businesses within BP 1 mile walkshed ------ ORIGINAL---------- 
-map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE#,
-                                                   # minZoom = 13,
-                                                   # maxZoom = 16
-                                                   )
-                                                   ) %>% 
+map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)
+                          ) %>%
   setView(lng = -76.98892, lat = 38.86713, zoom = 15.25) %>% 
   addTiles() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
@@ -455,13 +478,13 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE#,
       var style = document.createElement('style');
       style.innerHTML = `
         .leaflet-container {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
         .leaflet-control {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
         .leaflet-legend {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
       `;
       document.head.appendChild(style);
@@ -483,6 +506,51 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE#,
 ")
 
 map_sbs_buffer
+
+map_sbs_buffer2 <- tagList(
+  font_header,  # Injects the font into the HTML document
+  
+  leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
+    setView(lng = -76.98892, lat = 38.86713, zoom = 15.25) %>%
+    addProviderTiles(providers$CartoDB.Positron) %>%
+    addPolygons(
+      data = bp_buffer,
+      color = "#27ae60",
+      fillOpacity = 0,
+      weight = 1.2,
+      highlightOptions = highlightOptions(color = "white", weight = 1, bringToFront = FALSE)
+    ) %>%
+    addCircleMarkers(
+      data = small_biz_owner,
+      lng = ~longitude,
+      lat = ~latitude,
+      label = ~popup_label,
+      color = ~pal_biz(type_dc_categories),
+      radius = 3,
+      stroke = FALSE,
+      fillOpacity = 1,
+      clusterOptions = markerClusterOptions(freezeAtZoom = 21)
+    ) %>%
+    addLegend(
+      pal = pal_biz,
+      values = small_biz_owner$type_dc_categories,
+      position = "bottomright",
+      opacity = 1
+    ) %>%
+    addPolygons(
+      data = sf::st_zm(bridge_park),
+      fillColor = "darkgreen",
+      color = "darkgreen",
+      weight = 3,
+      opacity = 0.7,
+      highlightOptions = highlightOptions(color = "white", weight = 1, bringToFront = TRUE),
+      label = "Future Site of the Bridge Park",
+      labelOptions = labelOptions(noHide = TRUE, direction = "left", offset = c(0, 15))
+    )
+)
+
+map_sbs_buffer2
+
 
 #Maps showing businesses by sub-categories within BP 1 mile walkshed ------ DETAILED BIZ ---------- 
 create_small_biz_map <- function(data, 
@@ -551,13 +619,13 @@ create_small_biz_map <- function(data,
         var style = document.createElement('style');
         style.innerHTML = `
           .leaflet-container {
-            font-family: 'Lato', sans-serif !important;
+            font-family: 'Montserrat', sans-serif !important;
           }
           .leaflet-control {
-            font-family: 'Lato', sans-serif !important;
+            font-family: 'Montserrat', sans-serif !important;
           }
           .leaflet-legend {
-            font-family: 'Lato', sans-serif !important;
+            font-family: 'Montserrat', sans-serif !important;
           }
         `;
         document.head.appendChild(style);
@@ -681,13 +749,13 @@ addControl(
       var style = document.createElement('style');
       style.innerHTML = `
         .leaflet-container {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
         .leaflet-control {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
         .leaflet-legend {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
       `;
       document.head.appendChild(style);
@@ -761,13 +829,13 @@ map_anacostia_ref <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
       var style = document.createElement('style');
       style.innerHTML = `
         .leaflet-container {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
         .leaflet-control {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
         .leaflet-legend {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
       `;
       document.head.appendChild(style);
@@ -848,13 +916,13 @@ map_sbs_prop_values <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>
       var style = document.createElement('style');
       style.innerHTML = `
         .leaflet-container {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
         .leaflet-control {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
         .leaflet-legend {
-          font-family: 'Lato', sans-serif !important;
+          font-family: 'Montserrat', sans-serif !important;
         }
       `;
       document.head.appendChild(style);

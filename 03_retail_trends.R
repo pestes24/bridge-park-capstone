@@ -10,6 +10,7 @@ library(stringr)
 library(urbnthemes)
 library(gapminder)
 library(zoo)
+library(showtext)
 
 set_urbn_defaults(style = "print")
 
@@ -26,6 +27,13 @@ set_urbn_defaults(style = "print")
 # Usage
 # Always load library(urbnthemes) after library(ggplot2) or library(tidyverse).
 
+#Adding Montserrat
+font_add("montserrat", "C:/Users/peter/Desktop/Fonts/Montserrat/static/Montserrat-Regular.ttf")
+showtext_auto()
+font_add(family = "montserrat",
+         regular = "C:/Users/peter/Desktop/Fonts/Montserrat/static/Montserrat-Regular.ttf",
+         bold = "C:/Users/peter/Desktop/Fonts/Montserrat/static/Montserrat-Bold.ttf",
+         italic = "C:/Users/peter/Desktop/Fonts/Montserrat/static/Montserrat-Italic.ttf")
 
 
 
@@ -211,13 +219,17 @@ rent_inflation_plot <- retail_trends_rent %>%
     name="Geography", 
     labels = c("Anacostia", "East of the River", "Washington, DC")
   ) +
-  labs(title = "Figure XX: Trends in Asking Rents, Retail Properties",
+  labs(title = "Figure 4: Trends in Asking Rents, Retail Properties",
        subtitle = "(per square foot, adjusted for inflation)",
        x = "",
        y = "Market Asking Rent (per square foot)",
-       color = ""
+       color = "",
+       caption = "Source: CoStar. Note: all rent figures have been adjusted for inflation and converted to 2024 dollars."
        ) +
-  remove_ticks()
+  theme_urbn_print() + 
+  theme(
+    text = element_text(family = "montserrat", size = 16)
+  )
 
 rent_inflation_plot
 
@@ -252,12 +264,16 @@ sales_inflation_plot <- retail_trends_sales %>%
     name="Geography", 
     labels = c("Anacostia", "East of the River", "Washington, DC")
   ) +
-  labs(title = "Figure XX: Trends in Sales Prices, Retail Properties",
+  labs(title = "Figure 5b: Trends in Sales Prices, Retail Properties",
        subtitle = "(per square foot, adjusted for inflation)",
        x = "",
        y = "Sales Prices (per square foot, adjusted for inflation)",
        color = "",
-       caption = "Source: CoStar. ADD HERE Inflation adjustment info"
+       caption = str_wrap("Source: CoStar. Note: all sales price figures have been adjusted for inflation and converted to 2024 dollars.")
+  ) +
+  theme_urbn_print() + 
+  theme(
+    text = element_text(family = "montserrat")
   )
 
 sales_inflation_plot
@@ -288,16 +304,24 @@ sales_inflation_plot_trendline <- retail_trends_sales %>%
                      limits = c(0, 1050)
   ) + 
   scale_color_discrete(
-    name="Geography", 
+    name = "Geography", 
     labels = c("Anacostia", "East of the River", "Washington, DC")
   ) +
-  labs(title = "Figure XX: Trends in Sales Prices, Retail Properties",
+  labs(title = "Figure 5: Trends in Sales Prices, Retail Properties",
        subtitle = "(per square foot, adjusted for inflation)",
        x = "",
        y = "Sales Prices (per square foot)",
        color = "",
-       caption = "Source: CoStar. ADD HERE Inflation adjustment info"
-  ) 
+       caption = "Source: CoStar. Note: all sales price figures have been adjusted for inflation and converted to 2024 dollars."
+  ) +
+  theme_urbn_print() + 
+  theme(
+    #legend.text = element_text(margin = margin(l = 1)),  # add margin to the left of legend text
+    #legend.key.width = unit(.75, "lines"),               # increase space reserved for keys
+    #legend.spacing.x = unit(2.5, "pt"),
+    #legend.key = element_rect(fill = NA),                # avoid key background interfering
+    text = element_text(family = "montserrat", size = 16)           # keep your font override
+  )
 
 sales_inflation_plot_trendline
 
