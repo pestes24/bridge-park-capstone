@@ -484,122 +484,131 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE#,
 
 map_sbs_buffer
 
-#Map showing businesses within BP 1 mile walkshed ------ DETAILED BIZ ---------- 
-map_sbs_buffer_detail <- leaflet(options = leafletOptions(zoomControl = FALSE#,
-                                                   # minZoom = 13,
-                                                   # maxZoom = 16
-)
-) %>% 
-  setView(lng = -76.98892, lat = 38.86713, zoom = 15.25) %>% 
-  addTiles() %>% 
-  addProviderTiles(providers$CartoDB.Positron) %>% 
-  addPolygons(
-    data = bp_buffer,
-    fillColor = NULL,
-    color = "#27ae60",
-    highlightOptions = highlightOptions(color = "white", 
-                                        weight = 1,
-                                        bringToFront = FALSE),
-    opacity = .7,
-    weight = 1.2,
-    fillOpacity = 0,
-    options = pathOptions()
-    #group ="Count of FBO Owned Properties - Zip Code",
-    #smoothFactor = 0.2,
-    #label = shp_data$popup_label,
-    #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
-  ) %>%
-  # addMarkers(icon = ~ icons[ticker], # lookup based on ticker
-  #            label = ~ address) %>%
-  addCircleMarkers(
-    data = small_biz_owner,
-    ~longitude, ~latitude, 
-    #popup = ~as.character(name), 
-    label = small_biz_owner$popup_label,
-    color = ~pal_biz_detail(type_detail), #"#aed6f1", # could make custom markers for businesses by type
-    radius = 3,
-    stroke = FALSE, 
-    fillOpacity = 1,
-    clusterOptions = markerClusterOptions(freezeAtZoom = 21)
-  ) %>% 
-  addLegend(
-    pal = pal_biz,
-    values = small_biz_food$type_detail,
-    position = "bottomright", #"topleft",
-    #title = "Businesses <1 mile from the Bridge Park",
-    #group = "Count of FBO Owned Properties - Zip Code",
-    # labFormat = function(type, cuts, p) {
-    #   # Define custom bin labels in order
-    #   custom_labels <- c("0", "1-5", "6-9", "10-13", "14-17", "18-300")
-    #
-    #   # Return labels for each cut
-    #   return(custom_labels)
-    # },
-    #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
-    opacity = 1) %>%
-  addPolygons(
-    data = sf::st_zm(bridge_park), #
-    fillColor = "darkgreen",
-    color = "darkgreen",
-    highlightOptions = highlightOptions(
-      color = "white",
-      weight = 1,
-      bringToFront = TRUE
-    ),
-    opacity = .7,
-    weight = 3,
-    label = "Future Site of the Bridge Park",  # Static label
-    labelOptions = labelOptions(
-      noHide = TRUE,  # Keeps the label visible at all times
-      direction = "left",  # Position the label above the polygon
-      offset = c(0, 15)  # Adjust the label's position a bit upwards
-    )
-    # fillOpacity = 0,
-    # options = pathOptions()
-  ) %>%
-  # Notes,could add above^
-  #   #group = "Count of FBO Owned Properties - Zip Code",
-  #   #smoothFactor = 0.2,
-  #   #label = shp_data$popup_label,
-  #   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20)
-  # addControl( #commenting out temporarily 
-  #   html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source not
-  #   position = "bottomright"
-  #   ) %>% 
-  htmlwidgets::onRender("
-    function(el, x) {
-      var style = document.createElement('style');
-      style.innerHTML = `
-        .leaflet-container {
-          font-family: 'Lato', sans-serif !important;
-        }
-        .leaflet-control {
-          font-family: 'Lato', sans-serif !important;
-        }
-        .leaflet-legend {
-          font-family: 'Lato', sans-serif !important;
-        }
-      `;
-      document.head.appendChild(style);
-      // Access the Leaflet layers (assuming your GeoJSON or SF layer is added here)
-    var map = el; // Assuming 'el' is your map
-    map.eachLayer(function(layer) {
-      if (layer instanceof L.GeoJSON) {
-        // Modify the stroke thickness of each GeoJSON layer (or replace with your specific layer type)
-        layer.setStyle({
-          weight: 3, // This controls the line thickness
-          color: 'black', // Border color
-          opacity: 1,
-          fillColor: 'yellow', // Example fill color for polygons or markers
-          fillOpacity: 0.6
+#Maps showing businesses by sub-categories within BP 1 mile walkshed ------ DETAILED BIZ ---------- 
+create_small_biz_map <- function(data, 
+                                 category_filter = NULL,
+                                 color_by = "type_dc_categories",
+                                 palette = "Dark2") {
+  
+  # Filter data if a filter is specified
+  if (!is.null(category_filter)) {
+    data <- data[data$type_dc_categories %in% category_filter, ]
+  }
+  
+  # Set color palette based on the color_by variable
+  pal <- colorFactor(
+    palette = palette, 
+    domain = data[[color_by]]
+  )
+  
+  leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
+    setView(lng = -76.98892, lat = 38.86713, zoom = 15.25) %>% 
+    addTiles() %>% 
+    addProviderTiles(providers$CartoDB.Positron) %>% 
+    
+    addPolygons(
+      data = bp_buffer,
+      fillColor = NULL,
+      color = "#27ae60",
+      highlightOptions = highlightOptions(color = "white", weight = 1, bringToFront = FALSE),
+      opacity = .7,
+      weight = 1.2,
+      fillOpacity = 0,
+      options = pathOptions()
+    ) %>%
+    
+    addCircleMarkers(
+      data = data,
+      ~longitude, ~latitude, 
+      label = ~popup_label,
+      color = ~pal(data[[color_by]]),
+      radius = 3,
+      stroke = FALSE, 
+      fillOpacity = 1,
+      clusterOptions = markerClusterOptions(freezeAtZoom = 21)
+    ) %>% 
+    
+    addLegend(
+      pal = pal,
+      values = data[[color_by]],
+      position = "bottomright",
+      opacity = 1
+    ) %>%
+    
+    addPolygons(
+      data = sf::st_zm(bridge_park),
+      fillColor = "darkgreen",
+      color = "darkgreen",
+      highlightOptions = highlightOptions(color = "white", weight = 1, bringToFront = TRUE),
+      opacity = .7,
+      weight = 3,
+      label = "Future Site of the Bridge Park",
+      labelOptions = labelOptions(noHide = TRUE, direction = "left", offset = c(0, 15))
+    ) %>%
+    
+    htmlwidgets::onRender("
+      function(el, x) {
+        var style = document.createElement('style');
+        style.innerHTML = `
+          .leaflet-container {
+            font-family: 'Lato', sans-serif !important;
+          }
+          .leaflet-control {
+            font-family: 'Lato', sans-serif !important;
+          }
+          .leaflet-legend {
+            font-family: 'Lato', sans-serif !important;
+          }
+        `;
+        document.head.appendChild(style);
+        var map = el;
+        map.eachLayer(function(layer) {
+          if (layer instanceof L.GeoJSON) {
+            layer.setStyle({
+              weight: 3,
+              color: 'black',
+              opacity: 1,
+              fillColor: 'yellow',
+              fillOpacity: 0.6
+            });
+          }
         });
       }
-    });
+    ")
   }
-")
 
-map_sbs_buffer_detail
 
+#Title: "Small Businesses within one mile of the Bridge Park"
+#Subtitle: "Food-Serving Establishments" 
+map_biz_food <- create_small_biz_map(
+  data = small_biz_owner,
+  category_filter = c("Food Services"),
+  color_by = "type_of_business",
+  palette = #optional, defaults to Dark2
+)
+map_biz_food
+
+
+#Title: "Small Businesses within one mile of the Bridge Park"
+#Subtitle: "General Sales / Services"
+map_biz_general <- create_small_biz_map(
+  data = small_biz_owner,
+  category_filter = c("General Sales / Services"),
+  color_by = "type_of_business",
+  palette = #optional, defaults to Dark2
+)
+map_biz_general
+
+
+#Title: "Small Businesses within one mile of the Bridge Park"
+#Subtitle: "Not food and not general retail"
+map_biz_misc <- create_small_biz_map(
+  data = small_biz_owner,
+  category_filter = c("Health Services", "Other Regulated Business", "Barber Shop / Hair Salon", "Nonprofit"),
+  color_by = "type_of_business",
+  palette = #optional, defaults to Dark2
+  )
+map_biz_misc
 
 
 
