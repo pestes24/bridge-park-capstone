@@ -225,7 +225,76 @@ small_biz_owner <- read.csv(file.path(peter_path, "small_businesses_ownership.cs
 #   count(type_detail) %>%
 #   arrange(desc(n))
 
+#Property Owner - includes Vacant Spaces
+#Business types from: https://dlcp.dc.gov/service/business-licensing-division 
+prop_owner_names <- c("Business Tenant (or most recent if vacant)",
+                      "Address",	
+                      "Type of Business",
+                      "type_dc_categories",
+                      "SSL",	
+                      "Use Code",	
+                      "Property Owner (as listed in https://mytax.dc.gov/_/#10)",
+                      "Most Recent Sale (Year)",	
+                      "Most Recent Sale ($)",	
+                      "Most Recent Sale Notes",	
+                      "Land Area (square feet)",
+                      "Tax Class",
+                      "Land Value - 2025",
+                      "Building Value - 2025",	
+                      "Assessment Value (Total)",	
+                      "Tax Relief",	
+                      "Location Bonus",
+                      "Latitude",
+                      "Longitude",
+                      "Notes")
 
+prop_owner <- read.csv(file.path(peter_path, "Anacostia Commercial Properties Long List.csv")) %>% 
+  clean_names() %>% 
+  mutate(
+    most_recent_sale_amt = as.numeric(most_recent_sale),
+    land_value_2025 = as.numeric(land_value_2025),
+    building_value_2025 = as.numeric(building_value_2025),
+    assessment_value_total = as.numeric(assessment_value_total),
+    name = business_tenant_or_most_recent_if_vacant
+  ) %>% 
+  mutate(
+    type_dc_categories = case_when(
+      str_starts(type_dc_categories, "Beauty") ~ "Barber Shop / Hair Salon",
+      str_starts(type_dc_categories, "General") ~ "General Sales / Services",
+      str_starts(type_dc_categories, "Reg") ~ "Other Regulated Business", #see list in link above; includes spas, gyms, auto repair, funerals, smoke shops, etc. 
+      str_starts(type_dc_categories, "Not") ~ "Nonprofit",
+      TRUE ~ as.character(type_dc_categories)
+    ),
+    sale_category = cut(
+      most_recent_sale_amt,
+      breaks = c(0, 500000, 1000000, 1500000, 2000000, 2500000),
+      labels = c("$0-$500K", "$500K-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M"),
+      include.lowest = TRUE
+    ),
+    sale_category = case_when(is.na(sale_category) ~ "No Recent Transaction in OTR Database",
+                              TRUE ~ sale_category
+    ),
+    sale_category = factor(sale_category,
+                           levels = c("$0-$500K", "$500K-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M")  # Define the order of categories
+    ),
+    value_category = cut(
+      assessment_value_total,
+      breaks = c(0, 1000000, 2500000, 5000000, 10000000,35000000),
+      labels = c("$0-$1M", "$1M-$2.5M", "$2.5M-$5M", "$5M-$10M", "$10M+"),
+      include.lowest = TRUE
+    ),
+    value_category = case_when(is.na(value_category) ~ "No Value in OTR Database",
+                               TRUE ~ value_category
+    ),
+    value_category = factor(value_category,
+                            levels = c("$0-$1M", "$1M-$2.5M", "$2.5M-$5M", "$5M-$10M", "$10M+", "No Value in OTR Database")),
+  ) %>%
+  mutate(type_detail = case_when(
+    grepl("Busboys|Savages", name, ignore.case = TRUE) ~ "Restaurant (Sit-Down)",
+    grepl("Grounded", name, ignore.case = TRUE) ~ "Café",
+    type_dc_categories == "Food Services" ~ "Takeout Food or Convenience Store",
+    TRUE ~ type_dc_categories
+  ))
 
 # Create the count labels
 biz_counts <- small_biz_owner %>%
