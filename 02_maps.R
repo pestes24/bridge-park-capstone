@@ -189,15 +189,15 @@ small_biz_owner <- read.csv(file.path(peter_path, "small_businesses_ownership.cs
     ),
     sale_category = cut(
       most_recent_sale_amt,
-      breaks = c(0, 500000, 1000000, 1500000, 2000000, 2500000),
-      labels = c("$0-$500K", "$500K-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M"),
+      breaks = c(0, 1000000, 1500000, 2000000, 2500000,250000000),
+      labels = c("$0-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M", "2.5M+"),
       include.lowest = TRUE
     ),
     sale_category = case_when(is.na(sale_category) ~ "No Recent Transaction in OTR Database",
                               TRUE ~ sale_category
     ),
     sale_category = factor(sale_category,
-                           levels = c("$0-$500K", "$500K-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M")  # Define the order of categories
+                           levels = c("$0-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M", "2.5M+")  # Define the order of categories
     ),
     value_category = cut(
       assessment_value_total,
@@ -255,8 +255,14 @@ prop_owner <- read.csv(file.path(peter_path, "Anacostia Commercial Properties Lo
     land_value_2025 = as.numeric(land_value_2025),
     building_value_2025 = as.numeric(building_value_2025),
     assessment_value_total = as.numeric(assessment_value_total),
-    name = business_tenant_or_most_recent_if_vacant
-  ) %>% 
+    name = business_tenant_or_most_recent_if_vacant,
+    owner_name = property_owner_as_listed_in_https_mytax_dc_gov_10,
+    vacant_flag = case_when(
+      vacant_flag == 0 ~ "Not Vacant",
+      vacant_flag == 1 ~ "Vacant",
+      is.na(tax_class) ~ NA_character_
+    )
+  ) %>%
   mutate(
     type_dc_categories = case_when(
       str_starts(type_dc_categories, "Beauty") ~ "Barber Shop / Hair Salon",
@@ -267,15 +273,15 @@ prop_owner <- read.csv(file.path(peter_path, "Anacostia Commercial Properties Lo
     ),
     sale_category = cut(
       most_recent_sale_amt,
-      breaks = c(0, 500000, 1000000, 1500000, 2000000, 2500000),
-      labels = c("$0-$500K", "$500K-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M"),
+      breaks = c(0, 1000000, 1500000, 2000000, 2500000, 250000000),
+      labels = c("$0-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M", "2.5M+"),
       include.lowest = TRUE
     ),
     sale_category = case_when(is.na(sale_category) ~ "No Recent Transaction in OTR Database",
                               TRUE ~ sale_category
     ),
     sale_category = factor(sale_category,
-                           levels = c("$0-$500K", "$500K-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M")  # Define the order of categories
+                           levels = c("$0-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M", "2.5M+")  # Define the order of categories
     ),
     value_category = cut(
       assessment_value_total,
@@ -314,12 +320,18 @@ pal_biz_counts <- colorFactor(palette = "Set2",
 #   domain = food_type_counts$type_detail)
 
 sale_colors <- c(
-  "$0-$1M", "$1M-$2.5M", "$2.5M-$5M", "$5M-$10M", "$10M+"
+  "$0-$1M" = "#c7e9c0", 
+  "$1M-$1.5M" = "#a1d99b", 
+  "$1.5M-$2M" = "#31a354", 
+  "$2M-$2.5M" = "#006d2c", 
+  "2.5M+" = "#00441b",
+  "No Value in OTR Database" = "grey"  # Grey for NAs
 )
 
 pal_sale <- colorFactor(
-  palette = c(viridis(5), "grey"),  # colors from Viridis + Grey for NA
-  domain = c(levels(small_biz_owner$sale_category), NA)
+  palette = sale_colors,
+    #c(viridis(5), "grey"),  # colors from Viridis + Grey for NA
+  domain = c(levels(prop_owner$sale_category))
 )
 
 
@@ -334,7 +346,7 @@ value_colors <- c(
 
 pal_values <- colorFactor(
   palette = value_colors,   
-  domain = c(levels(small_biz_owner$value_category)) 
+  domain = c(levels(prop_owner$value_category)) 
 )
   
   
@@ -414,6 +426,20 @@ small_biz_owner$popup_label <- paste("<b>",small_biz_owner$name,"</b>", "<br>",
 ) %>%
   lapply(HTML)
 
+small_biz$popup_label <- paste("<b>",small_biz$name,"</b>", "<br>"
+) %>%
+  lapply(HTML)
+
+#same as above but for prop_owner
+prop_owner$popup_label <- paste("<b>",prop_owner$name,"</b>", "<br>",
+                                "Address: ",prop_owner$address, "<br>",
+                                "Owner (if available)",prop_owner$owner_name, "<br>",
+                                "Most Recent Sale Date (if available): ", prop_owner$most_recent_sale_year, "<br>", 
+                                "Most Recent Sale Price (if available): ", dollar(prop_owner$most_recent_sale_amt), "<br>",
+                                "Most Recent Assessed Property Value: ", dollar(prop_owner$assessment_value_total)
+                                
+) %>%
+  lapply(HTML)
 
 
 # Icons for business types 
@@ -576,49 +602,53 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)
 
 map_sbs_buffer
 
-map_sbs_buffer2 <- tagList(
-  font_header,  # Injects the font into the HTML document
-  
-  leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
-    setView(lng = -76.98892, lat = 38.86713, zoom = 15.25) %>%
-    addProviderTiles(providers$CartoDB.Positron) %>%
-    addPolygons(
-      data = bp_buffer,
-      color = "#27ae60",
-      fillOpacity = 0,
-      weight = 1.2,
-      highlightOptions = highlightOptions(color = "white", weight = 1, bringToFront = FALSE)
-    ) %>%
-    addCircleMarkers(
-      data = small_biz_owner,
-      lng = ~longitude,
-      lat = ~latitude,
-      label = ~popup_label,
-      color = ~pal_biz(type_dc_categories),
-      radius = 3,
-      stroke = FALSE,
-      fillOpacity = 1,
-      clusterOptions = markerClusterOptions(freezeAtZoom = 21)
-    ) %>%
-    addLegend(
-      pal = pal_biz,
-      values = small_biz_owner$type_dc_categories,
-      position = "bottomright",
-      opacity = 1
-    ) %>%
-    addPolygons(
-      data = sf::st_zm(bridge_park),
-      fillColor = "darkgreen",
-      color = "darkgreen",
-      weight = 3,
-      opacity = 0.7,
-      highlightOptions = highlightOptions(color = "white", weight = 1, bringToFront = TRUE),
-      label = "Future Site of the Bridge Park",
-      labelOptions = labelOptions(noHide = TRUE, direction = "left", offset = c(0, 15))
-    )
-)
+saveWidget(map_sbs_buffer, file.path(peter_export, "map_sbs_walkshed.html"))
 
-map_sbs_buffer2
+
+# map_sbs_buffer2 <- tagList(
+#   font_header,  # Injects the font into the HTML document
+#   
+#   leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
+#     setView(lng = -76.98892, lat = 38.86713, zoom = 15.25) %>%
+#     addProviderTiles(providers$CartoDB.Positron) %>%
+#     addPolygons(
+#       data = bp_buffer,
+#       color = "#27ae60",
+#       fillOpacity = 0,
+#       weight = 1.2,
+#       highlightOptions = highlightOptions(color = "white", weight = 1, bringToFront = FALSE)
+#     ) %>%
+#     addCircleMarkers(
+#       data = small_biz_owner,
+#       lng = ~longitude,
+#       lat = ~latitude,
+#       label = ~popup_label,
+#       color = ~pal_biz(type_dc_categories),
+#       radius = 3,
+#       stroke = FALSE,
+#       fillOpacity = 1,
+#       clusterOptions = markerClusterOptions(freezeAtZoom = 21)
+#     ) %>%
+#     addLegend(
+#       pal = pal_biz,
+#       values = small_biz_owner$type_dc_categories,
+#       position = "bottomright",
+#       opacity = 1
+#     ) %>%
+#     addPolygons(
+#       data = sf::st_zm(bridge_park),
+#       fillColor = "darkgreen",
+#       color = "darkgreen",
+#       weight = 3,
+#       opacity = 0.7,
+#       highlightOptions = highlightOptions(color = "white", weight = 1, bringToFront = TRUE),
+#       label = "Future Site of the Bridge Park",
+#       labelOptions = labelOptions(noHide = TRUE, direction = "left", offset = c(0, 15))
+#     )
+# )
+# 
+# map_sbs_buffer2
+# saveWidget(map_sbs_buffer2, file.path(peter_export, "map_sbs_buffer2.html"))
 
 
 #Maps showing businesses by sub-categories within BP 1 mile walkshed ------ DETAILED BIZ ---------- 
@@ -750,79 +780,199 @@ map_biz_misc
 
 
 # Map showing businesses with a recent sale ----------------------------------
-map_sbs_sales <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
-  addTiles() %>% 
-  addProviderTiles(providers$CartoDB.Positron) %>% 
-addCircleMarkers(
-  data = small_biz_owner,
-  ~longitude, ~latitude, 
-  #popup = ~as.character(name), 
-  label = small_biz_owner$popup_label,
-  color = case_when(
-    small_biz_owner$sale_category == "$0-$500K" ~ "#a1d99b",  # Darker light green  
-    small_biz_owner$sale_category == "$500K-$1M" ~ "#74c476",  # More saturated green  
-    small_biz_owner$sale_category == "$1M-$1.5M" ~ "#238b45",  # Strong medium green  
-    small_biz_owner$sale_category == "$1.5M-$2M" ~ "#006d2c",  # Very dark green  
-    small_biz_owner$sale_category == "$2M-$2.5M" ~ "#00441b",  # Deepest green  
-    small_biz_owner$sale_category == "No Recent Transaction in OTR Database" ~ "#00441b",  # Deepest green  
-    TRUE ~ "grey"
-  ), 
-  radius = case_when(
-    small_biz_owner$sale_category == "$0-$500K" ~ 3,       # Small radius for $0-$500K
-    small_biz_owner$sale_category == "$500K-$1M" ~ 3.5,      # Larger radius for $500K-$1M
-    small_biz_owner$sale_category == "$1M-$1.5M" ~ 4,      # Even larger radius for $1M-$1.5M
-    small_biz_owner$sale_category == "$1.5M-$2M" ~ 4.5,      # Larger still for $1.5M-$2M
-    small_biz_owner$sale_category == "$2M-$2.5M" ~ 5,     # Largest radius for $2M-$2.5M
-    TRUE ~ 2.5                               # Default radius if no match
-  ),
-  stroke = FALSE, 
-  fillOpacity = 1#,
-  #clusterOptions = markerClusterOptions(freezeAtZoom = 21)
-  ) %>% 
+# Version 1 - no toggle
+# map_props_sales <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
+#   addTiles() %>% 
+#   addProviderTiles(providers$CartoDB.Positron) %>% 
+# addCircleMarkers(
+#   data = prop_owner,
+#   ~longitude, ~latitude, 
+#   #popup = ~as.character(name), 
+#   label = ~popup_label,
+#   color = case_when(
+#     prop_owner$sale_category == "$0-$500K" ~ "#a1d99b",  # Darker light green  
+#     prop_owner$sale_category == "$500K-$1M" ~ "#74c476",  # More saturated green  
+#     prop_owner$sale_category == "$1M-$1.5M" ~ "#238b45",  # Strong medium green  
+#     prop_owner$sale_category == "$1.5M-$2M" ~ "#006d2c",  # Very dark green  
+#     prop_owner$sale_category == "$2M-$2.5M" ~ "#00441b",  # Deepest green  
+#     prop_owner$sale_category == "No Recent Transaction in OTR Database" ~ "#00441b",  # Deepest green  
+#     TRUE ~ "grey"
+#   ), 
+#   radius = case_when(
+#     prop_owner$sale_category == "$0-$500K" ~ 3,       # Small radius for $0-$500K
+#     prop_owner$sale_category == "$500K-$1M" ~ 3.5,      # Larger radius for $500K-$1M
+#     prop_owner$sale_category == "$1M-$1.5M" ~ 4,      # Even larger radius for $1M-$1.5M
+#     prop_owner$sale_category == "$1.5M-$2M" ~ 4.5,      # Larger still for $1.5M-$2M
+#     prop_owner$sale_category == "$2M-$2.5M" ~ 5,     # Largest radius for $2M-$2.5M
+#     TRUE ~ 2.5                               # Default radius if no match
+#   ),
+#   stroke = FALSE, 
+#   fillOpacity = 1#,
+#   #clusterOptions = markerClusterOptions(freezeAtZoom = 21)
+#   ) %>% 
+#   addLegend(
+#     #pal = pal_sale,
+#     #values = prop_owner$sale_category,
+#     colors = c("#a1d99b", "#74c476", "#238b45", "#006d2c", "#00441b", "grey"),
+#     labels = c("$0-$500K", "$500K-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M", "No Recent Transaction in OTR Database"),
+#     position = "topleft",
+#     title = "Small Business Locations - Recent Property Transaction",
+#     #group = "Count of FBO Owned Properties - Zip Code",
+#     # labFormat = function(type, cuts, p) {
+#     #   # Define custom bin labels in order
+#     #   custom_labels <- c("0", "1-5", "6-9", "10-13", "14-17", "18-300")
+#     #
+#     #   # Return labels for each cut
+#     #   return(custom_labels)
+#     # },
+#     #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
+#     opacity = 1) %>%
+#   # addPolygons(
+#   #   data = bridge_park,
+#   #   fillColor = "#FFFF00",
+#   #   color = "#273538",
+#   #   highlightOptions = highlightOptions(color = "white", weight = 1,
+#   #                                       bringToFront = TRUE),
+#   #   opacity = .7,
+#   #   weight = 1,
+#   #   fillOpacity = 0,
+#   #   #group ="Count of FBO Owned Properties - Zip Code",
+#   #   #smoothFactor = 0.2,
+# #   #label = shp_data$popup_label,
+# #   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+# addControl(
+#   html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection. As of 5/1/25.",  # Replace with your source note
+#   position = "bottomright"
+#   ) %>% 
+#   htmlwidgets::onRender("
+#     function(el, x) {
+#       var style = document.createElement('style');
+#       style.innerHTML = `
+#         .leaflet-container {
+#           font-family: 'Montserrat', sans-serif !important;
+#         }
+#         .leaflet-control {
+#           font-family: 'Montserrat', sans-serif !important;
+#         }
+#         .leaflet-legend {
+#           font-family: 'Montserrat', sans-serif !important;
+#         }
+#       `;
+#       document.head.appendChild(style);
+#     }
+#   ")
+# 
+# map_props_sales
+
+# Version 2 - toggle
+map_props_sales <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
+  addTiles() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  
+  # All properties
+  # addCircleMarkers(
+  #   data = prop_owner,
+  #   ~longitude, ~latitude,
+  #   group = "All Properties",
+  #   label = ~popup_label,
+  #   color = ~case_when(
+  #     sale_category == "$0-$1M" ~ "#a1d99b",
+  #     sale_category == "$1M-$1.5M" ~ "#74c476",
+  #     sale_category == "$1.5M-$2M" ~ "#238b45",
+  #     sale_category == "$2M-$2.5M" ~ "#006d2c",
+  #     sale_category == "$2.5M+" ~ "#00441b",
+  #     sale_category == "No Recent Transaction in OTR Database" ~ "grey",
+  #     TRUE ~ "grey"
+  #   ),
+  #   radius = ~case_when(
+  #     sale_category == "$0-$500K" ~ 3,
+  #     sale_category == "$500K-$1M" ~ 3.5,
+  #     sale_category == "$1M-$1.5M" ~ 4,
+  #     sale_category == "$1.5M-$2M" ~ 4.5,
+  #     sale_category == "$2M-$2.5M" ~ 5,
+  #     sale_category == "No Recent Transaction in OTR Database" ~ 2.5,
+  #     TRUE ~ 2.5
+  #   ),
+  #   stroke = FALSE,
+  #   fillOpacity = 1
+  # ) %>%
+  
+  # Vacant properties
+  addCircleMarkers(
+    data = filter(prop_owner, vacant_flag == "Vacant"),
+    ~longitude, ~latitude,
+    group = "Vacant Properties",
+    label = ~popup_label,
+    fillColor = ~pal_sale(sale_category),
+    # color = ~ifelse(vacant_flag == "Vacant", case_when(
+    #   sale_category == "$0-$1M" ~ "#a1d99b",
+    #   sale_category == "$1M-$1.5M" ~ "#74c476",
+    #   sale_category == "$1.5M-$2M" ~ "#238b45",
+    #   sale_category == "$2M-$2.5M" ~ "#006d2c",
+    #   sale_category == "$2.5M+" ~ "#00441b",
+    #   sale_category == "No Recent Transaction in OTR Database" ~ "grey",
+    #   TRUE ~ "grey"
+    #   )
+    # ),
+    fillOpacity = 1,
+    radius = 4,
+    stroke = T,
+    weight = 0.5,
+    color = "black"
+    ) %>%
+  
+  # Occupied properties
+  addCircleMarkers(
+    data = filter(prop_owner, vacant_flag == "Not Vacant"),
+    ~longitude, ~latitude,
+    group = "Occupied Properties",
+    label = ~popup_label,
+    fillColor = ~pal_sale(sale_category),
+    # color = ~ifelse(vacant_flag == "Not Vacant", case_when(
+    #   sale_category == "$0-$1M" ~ "#a1d99b",
+    #   sale_category == "$1M-$1.5M" ~ "#74c476",
+    #   sale_category == "$1.5M-$2M" ~ "#238b45",
+    #   sale_category == "$2M-$2.5M" ~ "#006d2c",
+    #   sale_category == "$2.5M+" ~ "#00441b",
+    #   sale_category == "No Recent Transaction in OTR Database" ~ "grey"#,
+    #   #TRUE ~ "grey"
+    #   )
+    # ),
+    fillOpacity = 1,
+    radius = 4,
+    stroke = T,
+    weight = 0.5,
+    color = "black"
+  ) %>%
+  
+  # Legend
   addLegend(
-    #pal = pal_sale,
-    #values = small_biz_owner$sale_category,
     colors = c("#a1d99b", "#74c476", "#238b45", "#006d2c", "#00441b", "grey"),
-    labels = c("$0-$500K", "$500K-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M", "No Recent Transaction in OTR Database"),
+    labels = c("$0-$1M", "$1M-$1.5M", "$1.5M-$2M", "$2M-$2.5M", "$2.5M+", "No Recent Transaction in OTR Database"),
     position = "topleft",
-    title = "Small Business Locations - Recent Property Transaction",
-    #group = "Count of FBO Owned Properties - Zip Code",
-    # labFormat = function(type, cuts, p) {
-    #   # Define custom bin labels in order
-    #   custom_labels <- c("0", "1-5", "6-9", "10-13", "14-17", "18-300")
-    #
-    #   # Return labels for each cut
-    #   return(custom_labels)
-    # },
-    #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
-    opacity = 1) %>%
-  # addPolygons(
-  #   data = bridge_park,
-  #   fillColor = "#FFFF00",
-  #   color = "#273538",
-  #   highlightOptions = highlightOptions(color = "white", weight = 1,
-  #                                       bringToFront = TRUE),
-  #   opacity = .7,
-  #   weight = 1,
-  #   fillOpacity = 0,
-  #   #group ="Count of FBO Owned Properties - Zip Code",
-  #   #smoothFactor = 0.2,
-#   #label = shp_data$popup_label,
-#   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
-addControl(
-  html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source note
-  position = "bottomright"
-  ) %>% 
+    title = "Small Business Locations – Most Recent Property Transaction",
+    opacity = 1
+  ) %>%
+  
+  # Layer toggle control
+  addLayersControl(
+    overlayGroups = c("Vacant Properties", "Occupied Properties"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  
+  # Source note
+  addControl(
+    html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection. As of 5/1/25.",
+    position = "bottomright"
+  ) %>%
+  
+  # Font styling
   htmlwidgets::onRender("
     function(el, x) {
       var style = document.createElement('style');
       style.innerHTML = `
-        .leaflet-container {
-          font-family: 'Montserrat', sans-serif !important;
-        }
-        .leaflet-control {
-          font-family: 'Montserrat', sans-serif !important;
-        }
+        .leaflet-container,
+        .leaflet-control,
         .leaflet-legend {
           font-family: 'Montserrat', sans-serif !important;
         }
@@ -831,14 +981,17 @@ addControl(
     }
   ")
 
-map_sbs_sales
+map_props_sales
+
+# Save the map
+saveWidget(map_props_sales, file.path(peter_export, "map_props_sales.html"))
 
 
 
 # Filtered for adjacent/overlapping Anacostia-side tracks
 # Tracts: 007401,007406,007407,007503,007504,007601,007605
 
-# Map showing Anacostia with census tract info 
+# Map showing Anacostia with census tract info -------------------------------
 map_anacostia_ref <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
   addTiles() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>%
@@ -916,80 +1069,199 @@ map_anacostia_ref
 
 
 # Map showing businesses with a recent sale ----------------------------------
-map_sbs_prop_values <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
-  addTiles() %>% 
-  addProviderTiles(providers$CartoDB.Positron) %>% 
+# Version 1 - no toggle
+# map_prop_values <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
+#   addTiles() %>% 
+#   addProviderTiles(providers$CartoDB.Positron) %>% 
+#   addCircleMarkers(
+#     data = prop_owner,
+#     ~longitude, ~latitude, 
+#     #popup = ~as.character(name), 
+#     label = ~popup_label,
+#     color = ~case_when(
+#       value_category == "$0-$1M" ~ "#a1d99b",  # Darker light green  
+#       value_category == "$1M-$2.5M" ~ "#74c476",  # More saturated green  
+#       value_category == "$2.5M-$5M" ~ "#238b45",  # Strong medium green  
+#       value_category == "$5M-$10M" ~ "#006d2c",  # Very dark green  
+#       value_category == "$10M+" ~ "#00441b",  # Deepest green  
+#       value_category == "No Value in OTR Database" ~ "grey",  # Grey for NAs
+#       TRUE ~ "black"  # Default fallback (optional)
+#     ), 
+#     radius = case_when(
+#       prop_owner$value_category == "$0-$1M" ~ 3.5,      # Larger radius for $500K-$1M
+#       prop_owner$value_category == "$1M-$2.5M" ~ 3.75,      # Even larger radius for $1M-$1.5M
+#       prop_owner$value_category == "$2.5M-$5M" ~ 4,      # Larger still for $1.5M-$2M
+#       prop_owner$value_category == "$5M-$10M" ~ 4.25,     # Largest radius for $2M-$2.5M
+#       prop_owner$value_category == "$10M+" ~ 4.5,     # Largest radius for $2M-$2.5M
+#       prop_owner$value_category == "No Value in OTR Database" ~ 3,
+#       TRUE ~ 3                              # Default radius if no match
+#     ),
+#     stroke = FALSE, 
+#     fillOpacity = 2#,
+#     #clusterOptions = markerClusterOptions(freezeAtZoom = 21)
+#   ) %>% 
+#   addLegend(
+#     #pal = pal_values,
+#     #values = prop_owner$value_category,    
+#     colors = c("#c7e9c0", "#a1d99b", "#31a354", "#006d2c", "#00441b", "grey"),  
+#     labels = c("$0-$1M", "$1M-$2.5M", "$2.5M-$5M", "$5M-$10M", "$10M+", "No Value in OTR Database"),  
+#     position = "topleft",
+#     title = "Small Business Locations - Assessed Property Value",
+#     #group = "Count of FBO Owned Properties - Zip Code",
+#     # labFormat = function(type, cuts, p) {
+#     #   # Define custom bin labels in order
+#     #   custom_labels <- c("0", "1-5", "6-9", "10-13", "14-17", "18-300")
+#     #
+#     #   # Return labels for each cut
+#     #   return(custom_labels)
+#     # },
+#     #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
+#     opacity = 1) %>%
+#   # addPolygons(
+#   #   data = bridge_park,
+#   #   fillColor = "#FFFF00",
+#   #   color = "#273538",
+#   #   highlightOptions = highlightOptions(color = "white", weight = 1,
+#   #                                       bringToFront = TRUE),
+#   #   opacity = .7,
+#   #   weight = 1,
+#   #   fillOpacity = 0,
+#   #   #group ="Count of FBO Owned Properties - Zip Code",
+#   #   #smoothFactor = 0.2,
+# #   #label = shp_data$popup_label,
+# #   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+#   addControl(
+#     html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source note
+#     position = "bottomright"
+#     ) %>% 
+#   htmlwidgets::onRender("
+#     function(el, x) {
+#       var style = document.createElement('style');
+#       style.innerHTML = `
+#         .leaflet-container {
+#           font-family: 'Montserrat', sans-serif !important;
+#         }
+#         .leaflet-control {
+#           font-family: 'Montserrat', sans-serif !important;
+#         }
+#         .leaflet-legend {
+#           font-family: 'Montserrat', sans-serif !important;
+#         }
+#       `;
+#       document.head.appendChild(style);
+#     }
+#   ")
+# 
+# map_prop_values
+# 
+
+# Version 2 - toggle
+map_prop_values <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
+  addTiles() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  
+  # All properties
+  # addCircleMarkers(
+  #   data = prop_owner,
+  #   ~longitude, ~latitude,
+  #   group = "All Properties",
+  #   label = ~popup_label,
+  #   color = ~case_when(
+  #     value_category == "$0-$1M" ~ "#a1d99b",
+  #     value_category == "$1M-$2.5M" ~ "#74c476",
+  #     value_category == "$2.5M-$5M" ~ "#238b45",
+  #     value_category == "$5M-$10M" ~ "#006d2c",
+  #     value_category == "$10M+" ~ "#00441b",
+  #     value_category == "No Value in OTR Database" ~ "grey",
+  #     TRUE ~ "black"
+  #   ),
+  #   radius = ~case_when(
+  #     value_category == "$0-$1M" ~ 3.5,
+  #     value_category == "$1M-$2.5M" ~ 3.75,
+  #     value_category == "$2.5M-$5M" ~ 4,
+  #     value_category == "$5M-$10M" ~ 4.25,
+  #     value_category == "$10M+" ~ 4.5,
+  #     value_category == "No Value in OTR Database" ~ 3,
+  #     TRUE ~ 3
+  #   ),
+  #   stroke = FALSE,
+  #   fillOpacity = 2
+  # ) %>%
+  
+  # Vacant properties
   addCircleMarkers(
-    data = small_biz_owner,
-    ~longitude, ~latitude, 
-    #popup = ~as.character(name), 
-    label = small_biz_owner$popup_label,
-    color = ~case_when(
-      value_category == "$0-$1M" ~ "#a1d99b",  # Darker light green  
-      value_category == "$1M-$2.5M" ~ "#74c476",  # More saturated green  
-      value_category == "$2.5M-$5M" ~ "#238b45",  # Strong medium green  
-      value_category == "$5M-$10M" ~ "#006d2c",  # Very dark green  
-      value_category == "$10M+" ~ "#00441b",  # Deepest green  
-      value_category == "No Value in OTR Database" ~ "grey",  # Grey for NAs
-      TRUE ~ "black"  # Default fallback (optional)
-    ), 
-    radius = case_when(
-      small_biz_owner$value_category == "$0-$1M" ~ 3.5,      # Larger radius for $500K-$1M
-      small_biz_owner$value_category == "$1M-$2.5M" ~ 3.75,      # Even larger radius for $1M-$1.5M
-      small_biz_owner$value_category == "$2.5M-$5M" ~ 4,      # Larger still for $1.5M-$2M
-      small_biz_owner$value_category == "$5M-$10M" ~ 4.25,     # Largest radius for $2M-$2.5M
-      small_biz_owner$value_category == "$10M+" ~ 4.5,     # Largest radius for $2M-$2.5M
-      small_biz_owner$value_category == "No Value in OTR Database" ~ 3,
-      TRUE ~ 3                              # Default radius if no match
-    ),
-    stroke = FALSE, 
-    fillOpacity = 2#,
-    #clusterOptions = markerClusterOptions(freezeAtZoom = 21)
-  ) %>% 
+    data = filter(prop_owner, vacant_flag == "Vacant"),
+    ~longitude, ~latitude,
+    group = "Vacant Properties",
+    label = ~popup_label,
+    fillColor = ~pal_values(value_category),
+    # color = ~case_when(
+    #   value_category == "$0-$1M" ~ "#a1d99b",
+    #   value_category == "$1M-$2.5M" ~ "#74c476",
+    #   value_category == "$2.5M-$5M" ~ "#238b45",
+    #   value_category == "$5M-$10M" ~ "#006d2c",
+    #   value_category == "$10M+" ~ "#00441b",
+    #   value_category == "No Value in OTR Database" ~ "grey",
+    #   TRUE ~ "black"
+    # ),
+    fillOpacity = 2,
+    radius = 4,
+    stroke = TRUE,
+    weight = 0.5,
+    color = "black"
+  ) %>%
+  
+  # Occupied properties
+  addCircleMarkers(
+    data = filter(prop_owner, vacant_flag == "Not Vacant"),
+    ~longitude, ~latitude,
+    group = "Occupied Properties",
+    label = ~popup_label,
+    fillColor = ~pal_values(value_category),
+    # color = ~case_when(
+    #   value_category == "$0-$1M" ~ "#a1d99b",
+    #   value_category == "$1M-$2.5M" ~ "#74c476",
+    #   value_category == "$2.5M-$5M" ~ "#238b45",
+    #   value_category == "$5M-$10M" ~ "#006d2c",
+    #   value_category == "$10M+" ~ "#00441b",
+    #   value_category == "No Value in OTR Database" ~ "grey",
+    #   TRUE ~ "black"
+    # ),
+    fillOpacity = 2,
+    radius = 4,
+    stroke = TRUE,
+    weight = 0.5,
+    color = "black"
+  ) %>%
+  
+  # Legend for value categories (same for all groups)
   addLegend(
-    #pal = pal_values,
-    #values = small_biz_owner$value_category,    
-    colors = c("#c7e9c0", "#a1d99b", "#31a354", "#006d2c", "#00441b", "grey"),  
-    labels = c("$0-$1M", "$1M-$2.5M", "$2.5M-$5M", "$5M-$10M", "$10M+", "No Value in OTR Database"),  
+    colors = c("#a1d99b", "#74c476", "#238b45", "#006d2c", "#00441b", "grey"),
+    labels = c("$0-$1M", "$1M-$2.5M", "$2.5M-$5M", "$5M-$10M", "$10M+", "No Value in OTR Database"),
     position = "topleft",
-    title = "Small Business Locations - Assessed Property Value",
-    #group = "Count of FBO Owned Properties - Zip Code",
-    # labFormat = function(type, cuts, p) {
-    #   # Define custom bin labels in order
-    #   custom_labels <- c("0", "1-5", "6-9", "10-13", "14-17", "18-300")
-    #
-    #   # Return labels for each cut
-    #   return(custom_labels)
-    # },
-    #labels = c("0", "1-5", "6-9", "10-13", "14-17", "18+"),
-    opacity = 1) %>%
-  # addPolygons(
-  #   data = bridge_park,
-  #   fillColor = "#FFFF00",
-  #   color = "#273538",
-  #   highlightOptions = highlightOptions(color = "white", weight = 1,
-  #                                       bringToFront = TRUE),
-  #   opacity = .7,
-  #   weight = 1,
-  #   fillOpacity = 0,
-  #   #group ="Count of FBO Owned Properties - Zip Code",
-  #   #smoothFactor = 0.2,
-#   #label = shp_data$popup_label,
-#   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+    title = "Anacostia Properties – Assessed Property Value",
+    opacity = 1
+  ) %>%
+  
+  # Layer toggle control
+  addLayersControl(
+    overlayGroups = c("Vacant Properties", "Occupied Properties"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  
+  # Source note
   addControl(
-    html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source note
+    html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection. \nAs of 5/1/25.",
     position = "bottomright"
-    ) %>% 
+  ) %>%
+  
+  # Font styling
   htmlwidgets::onRender("
     function(el, x) {
       var style = document.createElement('style');
       style.innerHTML = `
-        .leaflet-container {
-          font-family: 'Montserrat', sans-serif !important;
-        }
-        .leaflet-control {
-          font-family: 'Montserrat', sans-serif !important;
-        }
+        .leaflet-container,
+        .leaflet-control,
         .leaflet-legend {
           font-family: 'Montserrat', sans-serif !important;
         }
@@ -998,8 +1270,8 @@ map_sbs_prop_values <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>
     }
   ")
 
-map_sbs_prop_values
-
+map_prop_values
+saveWidget(map_prop_values, file.path(peter_export, "map_prop_values.html"))
 
 #-- CODE USEFUL IF MAKING FULLY INTERACTIVE MAP -------------------------------
 # ) %>%
