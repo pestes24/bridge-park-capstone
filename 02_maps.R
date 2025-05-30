@@ -87,15 +87,15 @@ ward_WOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp
   ) %>% 
   filter(!(ward %in% c(7, 8)))
 
-# ward_EOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp")) %>% 
-#   st_as_sf() %>%
-#   st_transform(crs = 4326) %>%
-#   clean_names() %>% 
-#   select(
-#     ward,
-#     geometry
-#   ) %>% 
-#   filter(ward %in% c(7, 8)) %>% 
+ward_EOTR <- read_sf(file.path(peter_path, "/Wards_from_2012/Wards_from_2012.shp")) %>%
+  st_as_sf() %>%
+  st_transform(crs = 4326) %>%
+  clean_names() %>%
+  select(
+    ward,
+    geometry
+  ) %>%
+  filter(ward %in% c(7, 8)) #%>%
 #   st_difference(rivers) # this isn't working here or below
   #Error in wk_handle.wk_wkb(wkb, s2_geography_writer(oriented = oriented,  : 
   #Loop 0 is not valid: Edge 51113 has duplicate vertex with edge 51121
@@ -122,7 +122,22 @@ bridge_park <- read_sf(file.path(peter_path,"Bridge Park.shp")) %>%
 bp_buffer <- read_sf(file.path(peter_path, "BridgeParkBuffer.shp")) %>% 
   st_as_sf() %>%
   st_transform(crs = 4326) %>%
-  clean_names()
+  clean_names() 
+
+#create a mask for DC
+dc_minus_buffer_mask <- st_difference(dc, bp_buffer) 
+
+dc_minus_buffer_mask_eotr <- dc_minus_buffer_mask %>% 
+  st_intersection(ward_EOTR) 
+
+
+
+#TEST Mask
+# dc_minus_buffer_mask_plot <- dc_minus_buffer_mask %>%
+#   ggplot()+
+#   geom_sf()
+# 
+# dc_minus_buffer_mask_plot
 
 # bp_buffer_eotr <- st_intersection(bp_buffer, rivers) %>% 
 #   st_difference(wards_EOTR)
@@ -420,6 +435,7 @@ small_biz$popup_label <- paste("<b>",small_biz$name,"</b>", "<br>"
 small_biz_owner$popup_label <- paste("<b>",small_biz_owner$name,"</b>", "<br>",
                                "Address: ",small_biz_owner$address, "<br>",
                                "Business Type: ",small_biz_owner$type_of_business, "<br>",
+                               "Business Type: ",small_biz_owner$type_dc_categories, "<br>",
                                "Most Recent Sale Date (if available): ", small_biz_owner$most_recent_sale_year, "<br>", 
                                "Most Recent Sale Price (if available): ", dollar(small_biz_owner$most_recent_sale_amt), "<br>",
                                "Most Recent Assessed Property Value: ", dollar(small_biz_owner$assessment_value_total)
@@ -496,21 +512,37 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)
   addTiles() %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
   addPolygons(
-    data = bp_buffer,
-    fillColor = NULL,
-    color = "#27ae60",
+    data = dc_minus_buffer_mask, #bp_buffer,
+    fillColor = "darkgray",
+    color = "darkgray", #"#27ae60",
     highlightOptions = highlightOptions(color = "white", 
                                         weight = 1,
                                         bringToFront = FALSE),
     opacity = .7,
     weight = 1.2,
-    fillOpacity = 0,
+    fillOpacity = .5,
     options = pathOptions()
     #group ="Count of FBO Owned Properties - Zip Code",
     #smoothFactor = 0.2,
     #label = shp_data$popup_label,
     #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
     ) %>%
+  # addPolygons(
+  #   data = ward_WOTR, #bp_buffer,
+  #   fillColor = "darkgray",
+  #   color = "darkgray", #"#27ae60",
+  #   highlightOptions = highlightOptions(color = "white", 
+  #                                       weight = 1,
+  #                                       bringToFront = FALSE),
+  #   opacity = .7,
+  #   weight = 1.2,
+  #   fillOpacity = .5,
+  #   options = pathOptions()
+  #   #group ="Count of FBO Owned Properties - Zip Code",
+  #   #smoothFactor = 0.2,
+  #   #label = shp_data$popup_label,
+  #   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20))
+  # ) %>%
   # addMarkers(icon = ~ icons[ticker], # lookup based on ticker
   #            label = ~ address) %>%
   addCircleMarkers(
@@ -527,8 +559,8 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)
   addLegend(
     pal = pal_biz,
     values = small_biz_owner$type_dc_categories,
-    position = "bottomright", #"topleft",
-    #title = "Businesses <1 mile from the Bridge Park",
+    position = "topleft",#"bottomright", #
+    title = "Businesses <1 mile from the Bridge Park",
     #group = "Count of FBO Owned Properties - Zip Code",
     # labFormat = function(type, cuts, p) {
     #   # Define custom bin labels in order
@@ -564,10 +596,10 @@ map_sbs_buffer <- leaflet(options = leafletOptions(zoomControl = FALSE)
   #   #smoothFactor = 0.2,
   #   #label = shp_data$popup_label,
   #   #labelOptions = labelOptions(direction = "bottom", offset = c(0, 20)
-  # addControl( #commenting out temporarily 
-  #   html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source not
-  #   position = "bottomright"
-  #   ) %>% 
+  addControl( #commenting out temporarily
+    html = "Sources: DC Office of Tax and Revenue, DC Department of Licensing and Consumer Protection",  # Replace with your source not
+    position = "bottomright"
+    ) %>%
   htmlwidgets::onRender("
     function(el, x) {
       var style = document.createElement('style');
@@ -655,7 +687,8 @@ saveWidget(map_sbs_buffer, file.path(peter_export, "map_sbs_walkshed.html"))
 create_small_biz_map <- function(data, 
                                  category_filter = NULL,
                                  color_by = "type_dc_categories",
-                                 palette = "Dark2") {
+                                 palette = "Dark2",
+                                 title = NULL) {
   
   # Filter data if a filter is specified
   if (!is.null(category_filter)) {
@@ -674,13 +707,15 @@ create_small_biz_map <- function(data,
     addProviderTiles(providers$CartoDB.Positron) %>% 
     
     addPolygons(
-      data = bp_buffer,
-      fillColor = NULL,
-      color = "#27ae60",
-      highlightOptions = highlightOptions(color = "white", weight = 1, bringToFront = FALSE),
+      data = dc_minus_buffer_mask_eotr, #bp_buffer,
+      fillColor = "darkgray",
+      color = "darkgray", #"#27ae60",
+      highlightOptions = highlightOptions(color = "white", 
+                                          weight = 1,
+                                          bringToFront = FALSE),
       opacity = .7,
       weight = 1.2,
-      fillOpacity = 0,
+      fillOpacity = .5,
       options = pathOptions()
     ) %>%
     
@@ -698,7 +733,8 @@ create_small_biz_map <- function(data,
     addLegend(
       pal = pal,
       values = data[[color_by]],
-      position = "bottomright",
+      position = "topleft", #"bottomright",
+      title = title,
       opacity = 1
     ) %>%
     
@@ -751,7 +787,8 @@ map_biz_food <- create_small_biz_map(
   data = small_biz_owner,
   category_filter = c("Food Services"),
   color_by = "type_of_business",
-  palette = #optional, defaults to Dark2
+  palette = "Dark2", #optional, defaults to Dark2,
+  title = "Food-Serving Establishments"
 )
 map_biz_food
 
@@ -762,7 +799,8 @@ map_biz_general <- create_small_biz_map(
   data = small_biz_owner,
   category_filter = c("General Sales / Services"),
   color_by = "type_of_business",
-  palette = #optional, defaults to Dark2
+  #palette = , #optional, defaults to Dark2,
+  title = "General Sales / Services"
 )
 map_biz_general
 
@@ -773,7 +811,8 @@ map_biz_misc <- create_small_biz_map(
   data = small_biz_owner,
   category_filter = c("Health Services", "Other Regulated Business", "Barber Shop / Hair Salon", "Nonprofit"),
   color_by = "type_of_business",
-  palette = #optional, defaults to Dark2
+  #palette = #optional, defaults to Dark2
+  title = "Not food and not general retail"
   )
 map_biz_misc
 
@@ -864,11 +903,23 @@ map_biz_misc
 # 
 # map_props_sales
 
-# Version 2 - toggle
+# Version 2 - toggle -----------------------------------------------------------
 map_props_sales <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
+  setView(lng = -76.98892, lat = 38.86713, zoom = 15.25) %>% 
   addTiles() %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
-  
+  addPolygons(
+    data = dc_minus_buffer_mask, #bp_buffer,
+    fillColor = "darkgray",
+    color = "darkgray", #"#27ae60",
+    highlightOptions = highlightOptions(color = "white", 
+                                        weight = 1,
+                                        bringToFront = FALSE),
+    opacity = .7,
+    weight = 1.2,
+    fillOpacity = .5,
+    options = pathOptions()
+  ) %>%
   # All properties
   # addCircleMarkers(
   #   data = prop_owner,
@@ -1157,9 +1208,21 @@ map_anacostia_ref
 
 # Version 2 - toggle
 map_prop_values <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
+  setView(lng = -76.98892, lat = 38.86713, zoom = 15.25) %>% 
   addTiles() %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
-  
+  addPolygons(
+    data = dc_minus_buffer_mask, #bp_buffer,
+    fillColor = "darkgray",
+    color = "darkgray", #"#27ae60",
+    highlightOptions = highlightOptions(color = "white", 
+                                        weight = 1,
+                                        bringToFront = FALSE),
+    opacity = .7,
+    weight = 1.2,
+    fillOpacity = .5,
+    options = pathOptions()
+  ) %>%
   # All properties
   # addCircleMarkers(
   #   data = prop_owner,
@@ -1272,6 +1335,14 @@ map_prop_values <- leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
 
 map_prop_values
 saveWidget(map_prop_values, file.path(peter_export, "map_prop_values.html"))
+
+
+
+# Could Do a Per Square Foot Map
+
+
+
+
 
 #-- CODE USEFUL IF MAKING FULLY INTERACTIVE MAP -------------------------------
 # ) %>%
